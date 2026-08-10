@@ -43,3 +43,10 @@ runtime rather than persisting a fixed ranking.
 
 Use a score gap or a possible cheaper-model lead as a prompt for a bounded
 review of task fit, confidence, freshness, and actual spend.
+
+## Local service boundary
+
+The foreground `swift run` path adds no third-party runtime, credentials,
+browser automation, or provider configuration. The optional installer adds
+only a user-level LaunchAgent and a local app bundle so the watcher can run at
+login.

@@ -36,9 +36,32 @@ cd aistupidlevel-menu-bar-watcher
 swift run AIStupidLevelWatcher
 ```
 
-The process lives in the menu bar while it runs. It does not install a login
-item or a LaunchAgent. Use `Quit` in the menu or stop the process from the
-terminal.
+The process lives in the menu bar while it runs. The command above is a
+foreground run and does not install a login item or a LaunchAgent. Use `Quit`
+in the menu or stop the process from the terminal.
+
+## Keep it running on macOS login
+
+To install the watcher as a user-level macOS service:
+
+```sh
+./scripts/install-macos-service.sh
+```
+
+The installer builds a release app under
+`~/Applications/AIStupidLevelWatcher.app`, registers
+`com.whyy9527.aistupidlevel.menu-bar-watcher` as a `LaunchAgent`, and starts it
+immediately. It runs at login and restarts after an unexpected crash. A normal
+`Quit` from the menu exits cleanly and stays stopped until you launch it again.
+No administrator password or Accessibility/Screen Recording permission is
+required. Service logs are written to
+`~/Library/Logs/AIStupidLevelWatcher/`.
+
+To stop and remove the installed service:
+
+```sh
+./scripts/uninstall-macos-service.sh
+```
 
 ## Data path
 
@@ -90,6 +113,7 @@ curl -fsS 'https://aistupidlevel.info/dashboard/cached?period=latest&sortBy=comb
 ```
 
 No third-party package, account, API key, browser state, model weight, or
-benchmark execution is part of this experiment.
+benchmark execution is part of this experiment. The optional service installer
+only adds a local user LaunchAgent and a local app bundle.
 
 Primary source review: [`docs/source-review.md`](docs/source-review.md).
