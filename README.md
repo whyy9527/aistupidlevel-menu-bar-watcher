@@ -5,6 +5,9 @@ Level leaderboard](https://aistupidlevel.info/?mode=leaderboard&period=latest&so
 It keeps the current combined top 20 and the GPT/OpenAI-family ranking one
 click away.
 
+[![CI](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 ## Why watch this ranking?
 
 The useful signal is comparative rather than absolute:
