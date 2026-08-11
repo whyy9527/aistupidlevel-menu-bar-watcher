@@ -7,6 +7,7 @@ trap 'rm -rf "$temp_dir"' EXIT
 
 swiftc \
   "$script_dir/Sources/AIStupidLevelWatcher/Models.swift" \
+  "$script_dir/Sources/AIStupidLevelWatcher/Pricing.swift" \
   "$script_dir/Tests/ModelChecks.swift" \
   -o "$temp_dir/model-checks"
 

@@ -35,6 +35,9 @@ struct ModelChecks {
         precondition(snapshot.gptRows[0].gptRank == 1)
         precondition(snapshot.gptRows[0].reasoning == 85)
         precondition(snapshot.gptRows[0].tooling == 95)
+        precondition(snapshot.topValue.map(\.name) == ["gpt-5.6-terra", "gpt-5.3-codex"])
+        precondition(snapshot.topValue[0].valueRank == 1)
+        precondition(abs((snapshot.topValue[0].blendedCostPerMillion ?? 0) - 8) < 0.0001)
 
         let unavailable = #"{"id":"1","name":"model","provider":"openai","currentScore":"unavailable"}"#.data(using: .utf8)!
         let decoded = try! JSONDecoder().decode(ModelScore.self, from: unavailable)

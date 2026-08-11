@@ -158,6 +158,15 @@ struct RankedModel: Identifiable, Hashable {
     let standardError: Double?
     let overallRank: Int
     let gptRank: Int?
+    let price: ModelPrice?
+    let valueRank: Int?
+
+    var blendedCostPerMillion: Double? { price?.blendedPerMillion }
+
+    var valueScore: Double? {
+        guard let combined, let cost = blendedCostPerMillion, cost > 0 else { return nil }
+        return combined / cost
+    }
 
     var isGPTFamily: Bool {
         let normalizedProvider = provider.lowercased()
@@ -193,6 +202,15 @@ struct DashboardSnapshot {
 
     var bestCombined: RankedModel? {
         rows.first
+    }
+
+    var topValue: [RankedModel] {
+        rows.compactMap { $0.valueRank == nil ? nil : $0 }
+            .sorted { ($0.valueRank ?? .max) < ($1.valueRank ?? .max) }
+    }
+
+    var bestValue: RankedModel? {
+        topValue.first
     }
 }
 
@@ -247,6 +265,22 @@ enum DashboardSnapshotBuilder {
             uniqueKeysWithValues: gptModels.enumerated().map { ($0.element.id, $0.offset + 1) }
         )
 
+        let priceByID = Dictionary(uniqueKeysWithValues: sorted.map {
+            ($0.id, ModelPriceCatalog.price(for: $0.name, provider: $0.provider))
+        })
+        let valueModels = sorted.filter { model in
+            guard let score = model.currentScore, let price = priceByID[model.id] ?? nil else { return false }
+            return score > 0 && price.blendedPerMillion > 0
+        }
+        let valueRanks = Dictionary(uniqueKeysWithValues: valueModels
+            .sorted { lhs, rhs in
+                let lhsValue = (lhs.currentScore ?? 0) / (priceByID[lhs.id]!!).blendedPerMillion
+                let rhsValue = (rhs.currentScore ?? 0) / (priceByID[rhs.id]!!).blendedPerMillion
+                return lhsValue == rhsValue ? (overallRanks[lhs.id] ?? 0) < (overallRanks[rhs.id] ?? 0) : lhsValue > rhsValue
+            }
+            .enumerated().map { ($0.element.id, $0.offset + 1) }
+        )
+
         let rows = sorted.enumerated().map { _, model in
             RankedModel(
                 id: model.id,
@@ -262,7 +296,9 @@ enum DashboardSnapshotBuilder {
                 confidenceUpper: model.confidenceUpper,
                 standardError: model.standardError,
                 overallRank: overallRanks[model.id] ?? 0,
-                gptRank: gptRanks[model.id]
+                gptRank: gptRanks[model.id],
+                price: priceByID[model.id] ?? nil,
+                valueRank: valueRanks[model.id]
             )
         }
 

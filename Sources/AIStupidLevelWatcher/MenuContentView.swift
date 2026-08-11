@@ -11,8 +11,20 @@ struct MenuContentView: View {
     var body: some View {
         if let snapshot = store.snapshot {
             Text("AI STUPID LEVEL")
-            Text("C combined · R reasoning · T tooling")
+            Text("V = combined score / estimated USD cost")
                 .font(.caption)
+
+            Menu("TOP VALUE · PRICE/PERFORMANCE") {
+                if snapshot.topValue.isEmpty {
+                    Text("No models have a verified price mapping")
+                } else {
+                    ForEach(snapshot.topValue.prefix(20)) { model in
+                        Button(valueLabel(model)) {
+                            open(model.modelURL)
+                        }
+                    }
+                }
+            }
 
             Menu("TOP 20 · COMBINED") {
                 ForEach(snapshot.top20) { model in
@@ -36,6 +48,7 @@ struct MenuContentView: View {
 
             Divider()
             Text("Source updated: \(snapshot.sourceUpdatedAt ?? "unknown")")
+            Text("Price blend: 40% input + 60% output / 1M tokens")
             if let successful = store.lastSuccessfulFetch {
                 Text("Fetched: \(successful.formatted(date: .omitted, time: .shortened))")
             }
@@ -63,6 +76,10 @@ struct MenuContentView: View {
             open(leaderboardURL)
         }
 
+        Button("Open price-source mapping") {
+            open(ModelPriceCatalog.sourceURL)
+        }
+
         Divider()
         Button("Quit") {
             NSApplication.shared.terminate(nil)
@@ -77,6 +94,13 @@ struct MenuContentView: View {
         let familyRank = model.gptRank.map { "GPT #\($0)" } ?? "GPT"
         let trend = model.trend.map { " · \($0)" } ?? ""
         return "\(familyRank) · overall #\(model.overallRank) \(model.name) · C \(score(model.combined)) · R \(score(model.reasoning)) · T \(score(model.tooling))\(trend)"
+    }
+
+    private func valueLabel(_ model: RankedModel) -> String {
+        let rank = model.valueRank.map { "#\($0)" } ?? "—"
+        let cost = model.blendedCostPerMillion.map { String(format: "$%.2f", $0) } ?? "unknown"
+        let value = model.valueScore.map { String(format: "%.1f", $0) } ?? "—"
+        return "\(rank) \(model.name) · \(value) pts/$ · \(cost)/1M"
     }
 
     private func score(_ value: Double?) -> String {

@@ -137,6 +137,9 @@ final class LeaderboardStore: ObservableObject {
     }
 
     var statusBarTitle: String {
+        if let best = snapshot?.bestValue, let value = best.valueScore {
+            return "AI V \(format(value))"
+        }
         guard let best = snapshot?.bestCombined, let score = best.combined else {
             return isRefreshing ? "AI …" : "AI —"
         }

@@ -2,8 +2,8 @@
 
 A native, dependency-free macOS menu-bar watcher for the public [AI Stupid
 Level leaderboard](https://aistupidlevel.info/?mode=leaderboard&period=latest&sortBy=combined).
-It keeps the current combined top 20 and the GPT/OpenAI-family ranking one
-click away.
+It keeps the current price/performance top 20, combined top 20, and
+GPT/OpenAI-family ranking one click away.
 
 [![CI](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -18,9 +18,8 @@ The useful signal is comparative rather than absolute:
 - compare a model's `reasoning` and `tooling` lenses instead of treating one
   combined number as a complete model verdict.
 
-The watcher does not fetch or guess provider prices. The public leaderboard
-does not publish price metadata, so price-vs-score inversion remains an
-explicit comparison step rather than a fabricated in-app ranking.
+The watcher includes a price/performance view. It uses the upstream project's
+[published model-price mapping](https://github.com/StudioPlatforms/aistupidmeter-web/blob/main/lib/model-pricing.ts): standard first-party list prices in USD per 1M tokens. The price estimate is `40% input + 60% output`; value is the current combined score divided by that estimate. Models without a specific mapping are excluded rather than assigned a guessed price.
 
 This is a source-monitoring aid, not an automated model selector. A score gap
 is a reason to inspect the task mix, confidence interval, freshness, and real
@@ -92,7 +91,11 @@ reliability.
 
 ## Reading the menu
 
-- `C`: source `combined` view, used for the top-20 ordering.
+- `V`: value score: `combined ÷ (0.4 × input price + 0.6 × output price)`.
+  It is displayed as benchmark points per estimated USD and is an estimate, not
+  a cost guarantee. Cached-token discounts, long-context tiers, regional
+  pricing, provider discounts, and task-specific input/output mix can change it.
+- `C`: source `combined` view, used for the combined top-20 ordering.
 - `R`: source `reasoning` view, a deep-reasoning signal.
 - `T`: source `tooling` view, a tool-calling signal.
 - `GPT / OpenAI family`: rows whose source provider is `openai`, plus GPT-named
