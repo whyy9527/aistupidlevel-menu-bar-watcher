@@ -2,8 +2,8 @@
 
 A native, dependency-free macOS menu-bar watcher for the public [AI Stupid
 Level leaderboard](https://aistupidlevel.info/?mode=leaderboard&period=latest&sortBy=combined).
-It keeps the current price/performance top 20, combined top 20, and
-GPT/OpenAI-family ranking one click away.
+It keeps the combined top 20, value top 20, GPT cluster, Claude cluster, and a
+compact Claude-vs-GPT comparison one click away.
 
 [![CI](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -13,8 +13,8 @@ GPT/OpenAI-family ranking one click away.
 The useful signal is comparative rather than absolute:
 
 - see the gap between models on the same published scoring system;
-- see whether a model that is cheaper in your own price sheet is scoring above
-  a more expensive model — an “intelligence inversion” worth investigating;
+- see a same-family `USE` pick when a lower-cost model remains near the score
+  of a more expensive peer while materially improving price/performance;
 - compare a model's `reasoning` and `tooling` lenses instead of treating one
   combined number as a complete model verdict.
 
@@ -24,6 +24,16 @@ The watcher includes a price/performance view. It uses the upstream project's
 This is a source-monitoring aid, not an automated model selector. A score gap
 is a reason to inspect the task mix, confidence interval, freshness, and real
 cost before changing a production model.
+
+## Cluster recommendation
+
+The GPT and Claude clusters use the same deterministic gate. A `USE` row is
+shown only when the candidate is at least 25% cheaper, supplies at least 25%
+more value, and is within `max(3 points, 7%)` of its more expensive peer's
+combined score (or their source confidence ranges overlap). The best qualifying
+value gain is shown once per cluster. This lets a near-tied Terra-versus-Sol
+case surface Terra without treating either source score as a general-intelligence
+verdict.
 
 ## Run
 
@@ -95,11 +105,16 @@ reliability.
   It is displayed as benchmark points per estimated USD and is an estimate, not
   a cost guarantee. Cached-token discounts, long-context tiers, regional
   pricing, provider discounts, and task-specific input/output mix can change it.
+- `TOP 20`: source `combined` ordering.
+- `TOP VALUE`: current price/performance ordering.
+- `GPT CLUSTER` and `CLAUDE CLUSTER`: provider-family rows plus their optional
+  same-family `USE` pick.
+- `CLAUDE VS GPT`: each cluster's score leader and value pick.
 - `C`: source `combined` view, used for the combined top-20 ordering.
 - `R`: source `reasoning` view, a deep-reasoning signal.
 - `T`: source `tooling` view, a tool-calling signal.
-- `GPT / OpenAI family`: rows whose source provider is `openai`, plus GPT-named
-  rows, including rows outside the combined top 20.
+- GPT/Claude rows are selected by their source provider (`openai`/`anthropic`)
+  or matching model-name prefix, including rows outside the combined top 20.
 
 The `R` and `T` labels are deliberately signals, not verdicts. They do not
 prove that a model is a good safety reviewer, a generally intelligent system,

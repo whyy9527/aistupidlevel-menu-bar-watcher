@@ -143,6 +143,39 @@ struct CacheMetadata: Decodable {
     let includesHistory: Bool?
 }
 
+enum ModelCluster: String, CaseIterable, Hashable {
+    case gpt
+    case claude
+
+    var menuTitle: String {
+        switch self {
+        case .gpt:
+            return "GPT CLUSTER"
+        case .claude:
+            return "CLAUDE CLUSTER"
+        }
+    }
+
+    static func resolve(provider: String, name: String) -> Self? {
+        let normalizedProvider = provider.lowercased()
+        let normalizedName = name.lowercased()
+
+        if normalizedProvider == "openai"
+            || normalizedName == "gpt"
+            || normalizedName.hasPrefix("gpt-")
+            || normalizedName.hasPrefix("gpt") {
+            return .gpt
+        }
+        if normalizedProvider == "anthropic"
+            || normalizedName == "claude"
+            || normalizedName.hasPrefix("claude-")
+            || normalizedName.hasPrefix("claude") {
+            return .claude
+        }
+        return nil
+    }
+}
+
 struct RankedModel: Identifiable, Hashable {
     let id: String
     let name: String
@@ -157,7 +190,8 @@ struct RankedModel: Identifiable, Hashable {
     let confidenceUpper: Double?
     let standardError: Double?
     let overallRank: Int
-    let gptRank: Int?
+    let cluster: ModelCluster?
+    let clusterRank: Int?
     let price: ModelPrice?
     let valueRank: Int?
 
@@ -166,15 +200,6 @@ struct RankedModel: Identifiable, Hashable {
     var valueScore: Double? {
         guard let combined, let cost = blendedCostPerMillion, cost > 0 else { return nil }
         return combined / cost
-    }
-
-    var isGPTFamily: Bool {
-        let normalizedProvider = provider.lowercased()
-        let normalizedName = name.lowercased()
-        return normalizedProvider == "openai"
-            || normalizedName == "gpt"
-            || normalizedName.hasPrefix("gpt-")
-            || normalizedName.hasPrefix("gpt")
     }
 
     var modelURL: URL? {
@@ -187,6 +212,22 @@ struct RankedModel: Identifiable, Hashable {
     }
 }
 
+struct ClusterRecommendation: Hashable {
+    let cluster: ModelCluster
+    let recommended: RankedModel
+    let expensivePeer: RankedModel
+    let scoreDifference: Double
+    let costSavingFraction: Double
+    let valueMultiplier: Double
+}
+
+struct ClusterComparison: Hashable {
+    let gptScoreLeader: RankedModel
+    let claudeScoreLeader: RankedModel
+    let gptValuePick: RankedModel
+    let claudeValuePick: RankedModel
+}
+
 struct DashboardSnapshot {
     let rows: [RankedModel]
     let fetchedAt: Date
@@ -197,7 +238,11 @@ struct DashboardSnapshot {
     }
 
     var gptRows: [RankedModel] {
-        rows.filter(\.isGPTFamily)
+        rows.filter { $0.cluster == .gpt }
+    }
+
+    var claudeRows: [RankedModel] {
+        rows.filter { $0.cluster == .claude }
     }
 
     var bestCombined: RankedModel? {
@@ -211,6 +256,144 @@ struct DashboardSnapshot {
 
     var bestValue: RankedModel? {
         topValue.first
+    }
+
+    var gptRecommendation: ClusterRecommendation? {
+        recommendation(for: .gpt)
+    }
+
+    var claudeRecommendation: ClusterRecommendation? {
+        recommendation(for: .claude)
+    }
+
+    var clusterComparison: ClusterComparison? {
+        guard let gptScoreLeader = gptRows.first,
+              let claudeScoreLeader = claudeRows.first,
+              let gptValuePick = valuePick(for: .gpt),
+              let claudeValuePick = valuePick(for: .claude) else {
+            return nil
+        }
+        return ClusterComparison(
+            gptScoreLeader: gptScoreLeader,
+            claudeScoreLeader: claudeScoreLeader,
+            gptValuePick: gptValuePick,
+            claudeValuePick: claudeValuePick
+        )
+    }
+
+    private func recommendation(for cluster: ModelCluster) -> ClusterRecommendation? {
+        ClusterRecommendationBuilder.best(in: cluster, rows: rows)
+    }
+
+    private func valuePick(for cluster: ModelCluster) -> RankedModel? {
+        if let recommendation = recommendation(for: cluster) {
+            return recommendation.recommended
+        }
+        return rows
+            .filter { $0.cluster == cluster && $0.valueScore != nil }
+            .sorted { lhs, rhs in
+                let leftValue = lhs.valueScore ?? -.infinity
+                let rightValue = rhs.valueScore ?? -.infinity
+                if leftValue != rightValue {
+                    return leftValue > rightValue
+                }
+                return lhs.overallRank < rhs.overallRank
+            }
+            .first
+    }
+}
+
+enum ClusterRecommendationBuilder {
+    /// A lower-cost model must retain a near-equivalent score, save at least
+    /// 25% of the blended price, and deliver at least 25% more value.
+    private static let minimumCostSavingFraction = 0.25
+    private static let minimumValueMultiplier = 1.25
+    private static let minimumScoreTolerance = 3.0
+    private static let relativeScoreTolerance = 0.07
+
+    static func best(in cluster: ModelCluster, rows: [RankedModel]) -> ClusterRecommendation? {
+        let familyRows = rows.filter { $0.cluster == cluster }
+        var recommendations: [ClusterRecommendation] = []
+
+        for recommended in familyRows {
+            guard let recommendedScore = recommended.combined,
+                  let recommendedCost = recommended.blendedCostPerMillion,
+                  let recommendedValue = recommended.valueScore,
+                  recommendedCost > 0 else {
+                continue
+            }
+
+            for expensivePeer in familyRows {
+                guard recommended.id != expensivePeer.id,
+                      let expensiveScore = expensivePeer.combined,
+                      let expensiveCost = expensivePeer.blendedCostPerMillion,
+                      let expensiveValue = expensivePeer.valueScore,
+                      expensiveCost > recommendedCost,
+                      expensiveValue > 0 else {
+                    continue
+                }
+
+                let costSavingFraction = 1 - (recommendedCost / expensiveCost)
+                let valueMultiplier = recommendedValue / expensiveValue
+                guard costSavingFraction >= minimumCostSavingFraction,
+                      valueMultiplier >= minimumValueMultiplier,
+                      scoresAreComparable(
+                        lowerCostScore: recommendedScore,
+                        higherCostScore: expensiveScore,
+                        lowerCostModel: recommended,
+                        higherCostModel: expensivePeer
+                      ) else {
+                    continue
+                }
+
+                recommendations.append(
+                    ClusterRecommendation(
+                        cluster: cluster,
+                        recommended: recommended,
+                        expensivePeer: expensivePeer,
+                        scoreDifference: recommendedScore - expensiveScore,
+                        costSavingFraction: costSavingFraction,
+                        valueMultiplier: valueMultiplier
+                    )
+                )
+            }
+        }
+
+        return recommendations.sorted { lhs, rhs in
+            if lhs.valueMultiplier != rhs.valueMultiplier {
+                return lhs.valueMultiplier > rhs.valueMultiplier
+            }
+            if lhs.costSavingFraction != rhs.costSavingFraction {
+                return lhs.costSavingFraction > rhs.costSavingFraction
+            }
+            if lhs.recommended.combined != rhs.recommended.combined {
+                return (lhs.recommended.combined ?? -.infinity) > (rhs.recommended.combined ?? -.infinity)
+            }
+            return lhs.recommended.overallRank < rhs.recommended.overallRank
+        }.first
+    }
+
+    private static func scoresAreComparable(
+        lowerCostScore: Double,
+        higherCostScore: Double,
+        lowerCostModel: RankedModel,
+        higherCostModel: RankedModel
+    ) -> Bool {
+        let tolerance = max(
+            minimumScoreTolerance,
+            abs(higherCostScore) * relativeScoreTolerance
+        )
+        if lowerCostScore >= higherCostScore - tolerance {
+            return true
+        }
+
+        guard let lowerBound = lowerCostModel.confidenceLower,
+              let upperBound = lowerCostModel.confidenceUpper,
+              let peerLowerBound = higherCostModel.confidenceLower,
+              let peerUpperBound = higherCostModel.confidenceUpper else {
+            return false
+        }
+        return max(lowerBound, peerLowerBound) <= min(upperBound, peerUpperBound)
     }
 }
 
@@ -253,16 +436,15 @@ enum DashboardSnapshotBuilder {
         let overallRanks = Dictionary(
             uniqueKeysWithValues: sorted.enumerated().map { ($0.element.id, $0.offset + 1) }
         )
-        let gptModels = sorted.filter {
-            let provider = $0.provider.lowercased()
-            let name = $0.name.lowercased()
-            return provider == "openai"
-                || name == "gpt"
-                || name.hasPrefix("gpt-")
-                || name.hasPrefix("gpt")
-        }
-        let gptRanks = Dictionary(
-            uniqueKeysWithValues: gptModels.enumerated().map { ($0.element.id, $0.offset + 1) }
+        let clusterRanks = Dictionary(
+            uniqueKeysWithValues: ModelCluster.allCases.flatMap { cluster in
+                sorted
+                    .filter {
+                        ModelCluster.resolve(provider: $0.provider, name: $0.name) == cluster
+                    }
+                    .enumerated()
+                    .map { ("\(cluster.rawValue):\($0.element.id)", $0.offset + 1) }
+            }
         )
 
         let priceByID = Dictionary(uniqueKeysWithValues: sorted.map {
@@ -296,7 +478,10 @@ enum DashboardSnapshotBuilder {
                 confidenceUpper: model.confidenceUpper,
                 standardError: model.standardError,
                 overallRank: overallRanks[model.id] ?? 0,
-                gptRank: gptRanks[model.id],
+                cluster: ModelCluster.resolve(provider: model.provider, name: model.name),
+                clusterRank: ModelCluster
+                    .resolve(provider: model.provider, name: model.name)
+                    .flatMap { clusterRanks["\($0.rawValue):\(model.id)"] },
                 price: priceByID[model.id] ?? nil,
                 valueRank: valueRanks[model.id]
             )
