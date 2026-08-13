@@ -8,6 +8,8 @@
 	<string>AIStupidLevelWatcher</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.whyy9527.aistupidlevel.menu-bar-watcher</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>CFBundleName</key>
 	<string>AIStupidLevelWatcher</string>
 	<key>CFBundlePackageType</key>

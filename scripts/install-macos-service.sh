@@ -14,9 +14,10 @@ uid_value=$(id -u)
 swift build --package-path "$repo_dir" -c release
 bin_dir=$(swift build --package-path "$repo_dir" -c release --show-bin-path)
 
-mkdir -p "${app_dir}/Contents/MacOS" "$agent_dir" "$log_dir"
+mkdir -p "${app_dir}/Contents/MacOS" "${app_dir}/Contents/Resources" "$agent_dir" "$log_dir"
 cp "$bin_dir/AIStupidLevelWatcher" "$app_binary"
 cp "$repo_dir/Resources/Info.plist" "${app_dir}/Contents/Info.plist"
+cp "$repo_dir/Resources/AppIcon.icns" "${app_dir}/Contents/Resources/AppIcon.icns"
 chmod 755 "$app_binary"
 
 sed \
@@ -26,7 +27,15 @@ sed \
 chmod 644 "$agent_plist"
 
 launchctl bootout "gui/${uid_value}/${agent_label}" 2>/dev/null || true
-launchctl bootstrap "gui/${uid_value}" "$agent_plist"
+bootstrap_attempt=1
+while ! launchctl bootstrap "gui/${uid_value}" "$agent_plist"; do
+    if [ "$bootstrap_attempt" -ge 5 ]; then
+        printf 'Failed to register LaunchAgent after %s attempts.\n' "$bootstrap_attempt" >&2
+        exit 1
+    fi
+    bootstrap_attempt=$((bootstrap_attempt + 1))
+    sleep 1
+done
 launchctl kickstart -k "gui/${uid_value}/${agent_label}"
 
 printf 'Installed: %s\n' "$app_dir"
