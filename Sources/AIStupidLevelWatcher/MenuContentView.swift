@@ -19,10 +19,10 @@ struct MenuContentView: View {
             }
 
             Menu("TOP VALUE") {
-                if snapshot.topValue.isEmpty {
+                if snapshot.topValue20.isEmpty {
                     Text("No models have a verified price mapping")
                 } else {
-                    ForEach(snapshot.topValue.prefix(20)) { model in
+                    ForEach(snapshot.topValue20) { model in
                         Button(valueLabel(model)) {
                             open(model.modelURL)
                         }
@@ -129,10 +129,9 @@ struct MenuContentView: View {
     }
 
     private func recommendationLabel(_ recommendation: ClusterRecommendation) -> String {
-        let scoreGap = String(format: "%+.0f", recommendation.scoreDifference)
-        let saving = String(format: "%.0f%%", recommendation.costSavingFraction * 100)
-        let value = String(format: "%.1f×", recommendation.valueMultiplier)
-        return "USE \(recommendation.recommended.name) over \(recommendation.expensivePeer.name) · C \(scoreGap) · \(saving) less · \(value) V"
+        let topRank = "TOP #\(recommendation.recommended.overallRank)"
+        let valueRank = recommendation.recommended.valueRank.map { "V #\($0)" } ?? "V —"
+        return "USE \(recommendation.recommended.name) over \(recommendation.expensivePeer.name) · \(topRank) · \(valueRank)"
     }
 
     private func comparisonScoreLabel(_ comparison: ClusterComparison) -> String {

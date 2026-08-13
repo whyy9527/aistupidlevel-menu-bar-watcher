@@ -27,13 +27,14 @@ cost before changing a production model.
 
 ## Cluster recommendation
 
-The GPT and Claude clusters use the same deterministic gate. A `USE` row is
-shown only when the candidate is at least 25% cheaper, supplies at least 25%
-more value, and is within `max(3 points, 7%)` of its more expensive peer's
-combined score (or their source confidence ranges overlap). The best qualifying
-value gain is shown once per cluster. This lets a near-tied Terra-versus-Sol
-case surface Terra without treating either source score as a general-intelligence
-verdict.
+The GPT and Claude clusters use the same deterministic gate. A `USE` candidate
+must be present in both visible lists: combined `TOP 20` and `TOP VALUE` top
+20. It is compared only with a more expensive same-cluster peer from `TOP 20`.
+It must be at least 25% cheaper, supply at least 25% more value, and be within
+`max(3 points, 7%)` of that peer's combined score (or have overlapping source
+confidence ranges). The best qualifying value gain is shown once per cluster.
+This lets a near-tied Terra-versus-Sol case surface Terra without deriving a
+recommendation from rows outside the two visible rankings.
 
 ## Run
 

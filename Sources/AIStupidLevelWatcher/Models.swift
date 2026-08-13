@@ -229,12 +229,14 @@ struct ClusterComparison: Hashable {
 }
 
 struct DashboardSnapshot {
+    static let menuLimit = 20
+
     let rows: [RankedModel]
     let fetchedAt: Date
     let sourceUpdatedAt: String?
 
     var top20: [RankedModel] {
-        Array(rows.prefix(20))
+        Array(rows.prefix(Self.menuLimit))
     }
 
     var gptRows: [RankedModel] {
@@ -254,8 +256,12 @@ struct DashboardSnapshot {
             .sorted { ($0.valueRank ?? .max) < ($1.valueRank ?? .max) }
     }
 
+    var topValue20: [RankedModel] {
+        Array(topValue.prefix(Self.menuLimit))
+    }
+
     var bestValue: RankedModel? {
-        topValue.first
+        topValue20.first
     }
 
     var gptRecommendation: ClusterRecommendation? {
@@ -282,24 +288,18 @@ struct DashboardSnapshot {
     }
 
     private func recommendation(for cluster: ModelCluster) -> ClusterRecommendation? {
-        ClusterRecommendationBuilder.best(in: cluster, rows: rows)
+        ClusterRecommendationBuilder.best(
+            in: cluster,
+            top20: top20,
+            topValue20: topValue20
+        )
     }
 
     private func valuePick(for cluster: ModelCluster) -> RankedModel? {
         if let recommendation = recommendation(for: cluster) {
             return recommendation.recommended
         }
-        return rows
-            .filter { $0.cluster == cluster && $0.valueScore != nil }
-            .sorted { lhs, rhs in
-                let leftValue = lhs.valueScore ?? -.infinity
-                let rightValue = rhs.valueScore ?? -.infinity
-                if leftValue != rightValue {
-                    return leftValue > rightValue
-                }
-                return lhs.overallRank < rhs.overallRank
-            }
-            .first
+        return topValue20.first { $0.cluster == cluster }
     }
 }
 
@@ -311,11 +311,17 @@ enum ClusterRecommendationBuilder {
     private static let minimumScoreTolerance = 3.0
     private static let relativeScoreTolerance = 0.07
 
-    static func best(in cluster: ModelCluster, rows: [RankedModel]) -> ClusterRecommendation? {
-        let familyRows = rows.filter { $0.cluster == cluster }
+    static func best(
+        in cluster: ModelCluster,
+        top20: [RankedModel],
+        topValue20: [RankedModel]
+    ) -> ClusterRecommendation? {
+        let topValueIDs = Set(topValue20.map(\.id))
+        let intelligenceRows = top20.filter { $0.cluster == cluster }
+        let candidateRows = intelligenceRows.filter { topValueIDs.contains($0.id) }
         var recommendations: [ClusterRecommendation] = []
 
-        for recommended in familyRows {
+        for recommended in candidateRows {
             guard let recommendedScore = recommended.combined,
                   let recommendedCost = recommended.blendedCostPerMillion,
                   let recommendedValue = recommended.valueScore,
@@ -323,7 +329,7 @@ enum ClusterRecommendationBuilder {
                 continue
             }
 
-            for expensivePeer in familyRows {
+            for expensivePeer in intelligenceRows {
                 guard recommended.id != expensivePeer.id,
                       let expensiveScore = expensivePeer.combined,
                       let expensiveCost = expensivePeer.blendedCostPerMillion,

@@ -44,6 +44,7 @@ struct ModelChecks {
         precondition(snapshot.gptRows[0].reasoning == 85)
         precondition(snapshot.gptRows[0].tooling == 95)
         precondition(snapshot.topValue.map(\.name) == ["gpt-5.6-terra", "gpt-5.3-codex", "claude-sonnet-5", "claude-opus-5", "gpt-5.6-sol"])
+        precondition(snapshot.topValue20.map(\.name) == snapshot.topValue.map(\.name))
         precondition(snapshot.topValue[0].valueRank == 1)
         precondition(abs((snapshot.topValue[0].blendedCostPerMillion ?? 0) - 8) < 0.0001)
 
@@ -65,6 +66,52 @@ struct ModelChecks {
         precondition(comparison.claudeScoreLeader.name == "claude-opus-5")
         precondition(comparison.gptValuePick.name == "gpt-5.6-terra")
         precondition(comparison.claudeValuePick.name == "claude-sonnet-5")
+
+        let top20Peer = RankedModel(
+            id: "top20-peer",
+            name: "gpt-5.6-sol",
+            provider: "openai",
+            combined: 75,
+            reasoning: nil,
+            tooling: nil,
+            trend: nil,
+            status: nil,
+            lastUpdated: nil,
+            confidenceLower: nil,
+            confidenceUpper: nil,
+            standardError: nil,
+            overallRank: 1,
+            cluster: .gpt,
+            clusterRank: 1,
+            price: .init(inputPerMillion: 5, outputPerMillion: 30),
+            valueRank: 21
+        )
+        let valueOnlyCandidate = RankedModel(
+            id: "value-only-candidate",
+            name: "gpt-5.6-terra",
+            provider: "openai",
+            combined: 71,
+            reasoning: nil,
+            tooling: nil,
+            trend: nil,
+            status: nil,
+            lastUpdated: nil,
+            confidenceLower: nil,
+            confidenceUpper: nil,
+            standardError: nil,
+            overallRank: 21,
+            cluster: .gpt,
+            clusterRank: 2,
+            price: .init(inputPerMillion: 2, outputPerMillion: 12),
+            valueRank: 1
+        )
+        precondition(
+            ClusterRecommendationBuilder.best(
+                in: .gpt,
+                top20: [top20Peer],
+                topValue20: [valueOnlyCandidate]
+            ) == nil
+        )
 
         let unavailable = #"{"id":"1","name":"model","provider":"openai","currentScore":"unavailable"}"#.data(using: .utf8)!
         let decoded = try! JSONDecoder().decode(ModelScore.self, from: unavailable)
