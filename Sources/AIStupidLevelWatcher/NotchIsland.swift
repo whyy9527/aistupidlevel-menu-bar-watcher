@@ -202,6 +202,11 @@ private enum NotchIslandLayout {
     }
 }
 
+private enum NotchIslandPalette {
+    // The deep violet background from the App Icon.
+    static let accent = Color(red: 0.38, green: 0.16, blue: 0.90)
+}
+
 private struct NotchIslandView: View {
     let models: [RankedModel]
     let cluster: ModelCluster
@@ -271,7 +276,7 @@ private struct NotchIslandView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Text("#\(model.clusterRank ?? 0)")
-                                .foregroundStyle(.yellow)
+                                .foregroundStyle(NotchIslandPalette.accent)
                             Text(model.name.uppercased())
                             Spacer(minLength: 0)
                             Text(metrics(for: model))
