@@ -142,6 +142,10 @@ private struct NotchIslandView: View {
                 .foregroundStyle(.white)
         }
         .font(.system(size: 13, weight: .bold, design: .rounded))
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onHover(true)
+        }
     }
 
     private var expandedContent: some View {
