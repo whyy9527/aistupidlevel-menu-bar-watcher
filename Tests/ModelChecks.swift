@@ -72,6 +72,7 @@ struct ModelChecks {
         precondition(gptRecommendation.recommended.valueRank == 2)
 
         precondition(snapshot.claudeRecommendation == nil)
+        precondition(snapshot.inversionRecommendations.map(\.cluster) == [.gpt])
 
         let comparison = try! require(snapshot.clusterComparison)
         precondition(comparison.gptScoreLeader.name == "gpt-5.6-terra")

@@ -116,9 +116,12 @@ final class LeaderboardStore: ObservableObject {
     @Published private(set) var lastError: String?
     @Published private(set) var lastSuccessfulFetch: Date?
 
+    private let onSnapshotChanged: (DashboardSnapshot?) -> Void
     private var refreshTimer: Timer?
 
-    init() {
+    init(onSnapshotChanged: @escaping (DashboardSnapshot?) -> Void = { _ in }) {
+        self.onSnapshotChanged = onSnapshotChanged
+        onSnapshotChanged(nil)
         refreshTimer = Timer.scheduledTimer(
             withTimeInterval: Self.refreshInterval,
             repeats: true
@@ -182,6 +185,7 @@ final class LeaderboardStore: ObservableObject {
             }
 
             snapshot = newSnapshot
+            onSnapshotChanged(newSnapshot)
             lastSuccessfulFetch = newSnapshot.fetchedAt
             lastError = nil
         } catch is CancellationError {
