@@ -163,16 +163,55 @@ private struct NotchIslandView: View {
         Button {
             onHover(true)
         } label: {
-            HStack(spacing: 8) {
-                Image(systemName: recommendations.isEmpty ? "bolt.slash.fill" : "bolt.fill")
-                    .foregroundStyle(recommendations.isEmpty ? .white.opacity(0.55) : .yellow)
-                Text("\(recommendations.count)")
+            HStack(spacing: 7) {
+                smartCoreIcon
+                Text(compactRecommendationNames)
                     .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.78)
             }
-            .font(.system(size: 13, weight: .bold, design: .rounded))
+            .font(.system(size: 12, weight: .bold, design: .rounded))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var smartCoreIcon: some View {
+        if let image = smartCoreImage {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: 18, height: 18)
+        } else {
+            Image(systemName: "sparkles")
+                .foregroundStyle(.cyan)
+        }
+    }
+
+    private var smartCoreImage: NSImage? {
+        guard let url = Bundle.main.url(forResource: "SmartCoreIcon", withExtension: "png") else {
+            return nil
+        }
+        return NSImage(contentsOf: url)
+    }
+
+    private var compactRecommendationNames: String {
+        guard !recommendations.isEmpty else {
+            return "NO BETTER MODEL"
+        }
+        return recommendations
+            .map { compactModelName($0.recommended.name) }
+            .joined(separator: " · ")
+    }
+
+    private func compactModelName(_ name: String) -> String {
+        let parts = name.uppercased().split(separator: "-")
+        if parts.first == "CLAUDE", let family = parts.dropFirst().first {
+            return String(family)
+        }
+        return parts.last.map(String.init) ?? name.uppercased()
     }
 
     private var expandedContent: some View {
