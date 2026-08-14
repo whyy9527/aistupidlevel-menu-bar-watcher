@@ -121,7 +121,6 @@ final class LeaderboardStore: ObservableObject {
 
     init(onSnapshotChanged: @escaping (DashboardSnapshot?) -> Void = { _ in }) {
         self.onSnapshotChanged = onSnapshotChanged
-        onSnapshotChanged(nil)
         refreshTimer = Timer.scheduledTimer(
             withTimeInterval: Self.refreshInterval,
             repeats: true
