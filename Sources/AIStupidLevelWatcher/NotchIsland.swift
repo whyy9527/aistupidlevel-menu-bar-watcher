@@ -238,19 +238,22 @@ private struct NotchIslandView: View {
     }
 
     private var appIcon: some View {
+        appIcon(size: 18)
+    }
+
+    private func appIcon(size: CGFloat) -> some View {
         Image(nsImage: NSApp.applicationIconImage)
             .resizable()
             .interpolation(.high)
             .scaledToFit()
-            .frame(width: 18, height: 18)
+            .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     }
 
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 7) {
-                Image(systemName: "chart.bar.fill")
-                    .foregroundStyle(.yellow)
+                appIcon(size: 14)
                 Text("\(cluster.notchTitle.uppercased()) TOP 3")
                     .foregroundStyle(.white.opacity(0.68))
             }

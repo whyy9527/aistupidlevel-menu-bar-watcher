@@ -27,7 +27,11 @@ struct AIStupidLevelWatcherApp: App {
         MenuBarExtra {
             MenuContentView(store: store, notchIsland: notchIsland)
         } label: {
-            Label(store.statusBarTitle, systemImage: "chart.bar.fill")
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .interpolation(.high)
+                .scaledToFit()
+                .frame(width: 18, height: 18)
         }
         .menuBarExtraStyle(.menu)
     }
