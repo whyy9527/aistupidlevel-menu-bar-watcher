@@ -129,9 +129,7 @@ struct MenuContentView: View {
     }
 
     private func recommendationLabel(_ recommendation: ClusterRecommendation) -> String {
-        let topRank = "TOP #\(recommendation.recommended.overallRank)"
-        let valueRank = recommendation.recommended.valueRank.map { "V #\($0)" } ?? "V —"
-        return "⚡︎ \(modelName(recommendation.recommended)) > \(modelName(recommendation.expensivePeer)) · \(topRank) · \(valueRank)"
+        "⚡︎ \(modelName(recommendation.recommended)) > \(modelName(recommendation.expensivePeer))"
     }
 
     private func comparisonScoreLabel(_ comparison: ClusterComparison) -> String {
