@@ -70,6 +70,7 @@ struct ModelChecks {
         precondition(gptRecommendation.expensivePeer.name == "gpt-5.6-sol")
         precondition(gptRecommendation.scoreDifference == 1)
         precondition(gptRecommendation.recommended.valueRank == 2)
+        precondition(abs((gptRecommendation.costSavingsFraction ?? 0) - 0.6) < 0.0001)
 
         precondition(snapshot.claudeRecommendation == nil)
         precondition(snapshot.inversionRecommendations.map(\.cluster) == [.gpt])
@@ -173,6 +174,61 @@ struct ModelChecks {
         )
         precondition(smallSavingRecommendation.recommended.id == slightlyCheaperCandidate.id)
         precondition(smallSavingRecommendation.expensivePeer.id == slightlyMoreExpensivePeer.id)
+
+        let noTopValueGateRecommendation = try! require(
+            ClusterRecommendationBuilder.best(
+                in: .gpt,
+                top20: [slightlyCheaperCandidate, slightlyMoreExpensivePeer],
+                topValue20: []
+            )
+        )
+        precondition(noTopValueGateRecommendation.recommended.id == slightlyCheaperCandidate.id)
+
+        let moreExpensiveTerra = RankedModel(
+            id: "more-expensive-terra",
+            name: "gpt-5.6-terra",
+            provider: "openai",
+            combined: 73,
+            reasoning: nil,
+            tooling: nil,
+            trend: nil,
+            status: nil,
+            lastUpdated: nil,
+            confidenceLower: nil,
+            confidenceUpper: nil,
+            standardError: nil,
+            overallRank: 1,
+            cluster: .gpt,
+            clusterRank: 1,
+            price: .init(inputPerMillion: 2, outputPerMillion: 12),
+            valueRank: 2
+        )
+        let cheaperLuna = RankedModel(
+            id: "cheaper-luna",
+            name: "gpt-5.6-luna",
+            provider: "openai",
+            combined: 61,
+            reasoning: nil,
+            tooling: nil,
+            trend: nil,
+            status: nil,
+            lastUpdated: nil,
+            confidenceLower: nil,
+            confidenceUpper: nil,
+            standardError: nil,
+            overallRank: 2,
+            cluster: .gpt,
+            clusterRank: 2,
+            price: .init(inputPerMillion: 0.2, outputPerMillion: 1.2),
+            valueRank: 1
+        )
+        precondition(
+            ClusterRecommendationBuilder.best(
+                in: .gpt,
+                top20: [moreExpensiveTerra, cheaperLuna],
+                topValue20: [cheaperLuna, moreExpensiveTerra]
+            ) == nil
+        )
 
         let unavailable = #"{"id":"1","name":"model","provider":"openai","currentScore":"unavailable"}"#.data(using: .utf8)!
         let decoded = try! JSONDecoder().decode(ModelScore.self, from: unavailable)

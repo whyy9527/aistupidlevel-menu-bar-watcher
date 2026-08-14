@@ -226,6 +226,15 @@ struct ClusterRecommendation: Hashable {
     let recommended: RankedModel
     let expensivePeer: RankedModel
     let scoreDifference: Double
+
+    var costSavingsFraction: Double? {
+        guard let recommendedCost = recommended.blendedCostPerMillion,
+              let expensiveCost = expensivePeer.blendedCostPerMillion,
+              expensiveCost > 0 else {
+            return nil
+        }
+        return (expensiveCost - recommendedCost) / expensiveCost
+    }
 }
 
 struct ClusterComparison: Hashable {
@@ -316,8 +325,9 @@ struct DashboardSnapshot {
 
 enum ClusterRecommendationBuilder {
     /// A candidate must stay near the cluster frontier, then strictly beat a
-    /// more expensive peer. TOP 20 and TOP VALUE provide the selection gate;
-    /// no additional percentage threshold is applied.
+    /// more expensive peer. TOP 20 defines the capability frontier; TOP VALUE
+    /// is only a secondary signal when otherwise-valid pairs tie. Price is
+    /// always decided directly for the specific candidate and peer.
     private static let minimumScoreTolerance = 3.0
     private static let relativeScoreTolerance = 0.07
 
@@ -326,14 +336,16 @@ enum ClusterRecommendationBuilder {
         top20: [RankedModel],
         topValue20: [RankedModel]
     ) -> ClusterRecommendation? {
-        let topValueIDs = Set(topValue20.map(\.id))
+        let topValueRankByID = Dictionary(
+            uniqueKeysWithValues: topValue20.enumerated().map { ($0.element.id, $0.offset + 1) }
+        )
         let intelligenceRows = top20.filter { $0.cluster == cluster }
         guard let intelligenceLeader = intelligenceRows.first,
               let intelligenceLeaderScore = intelligenceLeader.combined else {
             return nil
         }
         let candidateRows = intelligenceRows.filter { model in
-            guard let score = model.combined, topValueIDs.contains(model.id) else {
+            guard let score = model.combined else {
                 return false
             }
             return scoresAreComparable(
@@ -374,16 +386,25 @@ enum ClusterRecommendationBuilder {
         }
 
         return recommendations.sorted { lhs, rhs in
-            let leftValueRank = lhs.recommended.valueRank ?? .max
-            let rightValueRank = rhs.recommended.valueRank ?? .max
+            let leftCandidateScore = lhs.recommended.combined ?? -.infinity
+            let rightCandidateScore = rhs.recommended.combined ?? -.infinity
+            if leftCandidateScore != rightCandidateScore {
+                return leftCandidateScore > rightCandidateScore
+            }
+            let leftPeerScore = lhs.expensivePeer.combined ?? -.infinity
+            let rightPeerScore = rhs.expensivePeer.combined ?? -.infinity
+            if leftPeerScore != rightPeerScore {
+                return leftPeerScore > rightPeerScore
+            }
+            let leftSavings = lhs.costSavingsFraction ?? -.infinity
+            let rightSavings = rhs.costSavingsFraction ?? -.infinity
+            if leftSavings != rightSavings {
+                return leftSavings > rightSavings
+            }
+            let leftValueRank = topValueRankByID[lhs.recommended.id] ?? .max
+            let rightValueRank = topValueRankByID[rhs.recommended.id] ?? .max
             if leftValueRank != rightValueRank {
                 return leftValueRank < rightValueRank
-            }
-            if lhs.recommended.combined != rhs.recommended.combined {
-                return (lhs.recommended.combined ?? -.infinity) > (rhs.recommended.combined ?? -.infinity)
-            }
-            if lhs.expensivePeer.combined != rhs.expensivePeer.combined {
-                return (lhs.expensivePeer.combined ?? -.infinity) > (rhs.expensivePeer.combined ?? -.infinity)
             }
             return lhs.recommended.overallRank < rhs.recommended.overallRank
         }.first

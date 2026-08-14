@@ -187,7 +187,10 @@ private enum NotchIslandLayout {
         guard expanded else {
             return CGSize(width: 196, height: 34)
         }
-        return CGSize(width: 520, height: recommendationCount > 1 ? 142 : 96)
+        if recommendationCount == 0 {
+            return CGSize(width: 520, height: 96)
+        }
+        return CGSize(width: 520, height: recommendationCount > 1 ? 176 : 126)
     }
 }
 
@@ -265,18 +268,30 @@ private struct NotchIslandView: View {
                         guard let url = recommendation.recommended.modelURL else { return }
                         NSWorkspace.shared.open(url)
                     } label: {
-                        HStack(spacing: 10) {
-                            Text(modelName(recommendation.recommended))
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 10, weight: .bold))
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 10) {
+                                Text(modelName(recommendation.recommended))
+                                Spacer(minLength: 0)
+                                Text(modelMetrics(recommendation.recommended))
+                                    .foregroundStyle(.white.opacity(0.7))
+                            }
+                            HStack(spacing: 10) {
+                                Image(systemName: "arrow.down.right")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.yellow)
+                                Text(modelName(recommendation.expensivePeer))
+                                Spacer(minLength: 0)
+                                Text(modelMetrics(recommendation.expensivePeer))
+                                    .foregroundStyle(.white.opacity(0.7))
+                            }
+                            Text(inversionMetrics(recommendation))
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .foregroundStyle(.yellow)
-                            Text(modelName(recommendation.expensivePeer))
-                            Spacer(minLength: 0)
                         }
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.72)
+                        .minimumScaleFactor(0.78)
                     }
                     .buttonStyle(.plain)
                 }
@@ -289,6 +304,20 @@ private struct NotchIslandView: View {
 
     private func modelName(_ model: RankedModel) -> String {
         model.name.uppercased()
+    }
+
+    private func modelMetrics(_ model: RankedModel) -> String {
+        let score = model.combined.map { String(format: "C %.0f", $0) } ?? "C —"
+        let cost = model.blendedCostPerMillion.map { String(format: "$%.2f/M", $0) } ?? "price unknown"
+        return "\(score) · \(cost)"
+    }
+
+    private func inversionMetrics(_ recommendation: ClusterRecommendation) -> String {
+        let intelligenceGain = String(format: "+%.0f smarter", recommendation.scoreDifference)
+        let savings = recommendation.costSavingsFraction.map {
+            String(format: "%.0f%% less", $0 * 100)
+        } ?? "lower cost"
+        return "\(intelligenceGain) · \(savings)"
     }
 }
 

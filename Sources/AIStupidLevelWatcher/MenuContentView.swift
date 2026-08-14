@@ -150,7 +150,8 @@ struct MenuContentView: View {
     }
 
     private func recommendationLabel(_ recommendation: ClusterRecommendation) -> String {
-        "⚡︎ \(modelName(recommendation.recommended)) > \(modelName(recommendation.expensivePeer))"
+        let savings = recommendation.costSavingsFraction.map { String(format: "%.0f%% less", $0 * 100) } ?? "lower cost"
+        return "⚡︎ \(modelName(recommendation.recommended)) · C \(score(recommendation.recommended.combined)) · \(cost(recommendation.recommended)) > \(modelName(recommendation.expensivePeer)) · C \(score(recommendation.expensivePeer.combined)) · \(cost(recommendation.expensivePeer)) · \(savings)"
     }
 
     private func comparisonScoreLabel(_ comparison: ClusterComparison) -> String {
@@ -169,6 +170,11 @@ struct MenuContentView: View {
     private func value(_ model: RankedModel) -> String {
         guard let value = model.valueScore else { return "—" }
         return String(format: "V %.1f", value)
+    }
+
+    private func cost(_ model: RankedModel) -> String {
+        guard let cost = model.blendedCostPerMillion else { return "price unknown" }
+        return String(format: "$%.2f/M", cost)
     }
 
     private func modelName(_ model: RankedModel) -> String {
