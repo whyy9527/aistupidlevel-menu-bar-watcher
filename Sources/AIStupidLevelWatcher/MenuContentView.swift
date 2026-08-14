@@ -91,7 +91,7 @@ struct MenuContentView: View {
     }
 
     private func modelLabel(_ model: RankedModel) -> String {
-        "#\(model.overallRank) \(model.name) · C \(score(model.combined)) · R \(score(model.reasoning)) · T \(score(model.tooling))"
+        "\(modelName(model)) · #\(model.overallRank) · C \(score(model.combined)) · R \(score(model.reasoning)) · T \(score(model.tooling))"
     }
 
     @ViewBuilder
@@ -118,28 +118,28 @@ struct MenuContentView: View {
     private func clusterLabel(_ model: RankedModel) -> String {
         let familyRank = model.clusterRank.map { "#\($0)" } ?? "—"
         let trend = model.trend.map { " · \($0)" } ?? ""
-        return "\(familyRank) · overall #\(model.overallRank) \(model.name) · C \(score(model.combined)) · R \(score(model.reasoning)) · T \(score(model.tooling))\(trend)"
+        return "\(modelName(model)) · \(familyRank) · overall #\(model.overallRank) · C \(score(model.combined)) · R \(score(model.reasoning)) · T \(score(model.tooling))\(trend)"
     }
 
     private func valueLabel(_ model: RankedModel) -> String {
         let rank = model.valueRank.map { "#\($0)" } ?? "—"
         let cost = model.blendedCostPerMillion.map { String(format: "$%.2f", $0) } ?? "unknown"
         let value = model.valueScore.map { String(format: "%.1f", $0) } ?? "—"
-        return "\(rank) \(model.name) · \(value) pts/$ · \(cost)/1M"
+        return "\(modelName(model)) · V \(rank) · \(value) pts/$ · \(cost)/1M"
     }
 
     private func recommendationLabel(_ recommendation: ClusterRecommendation) -> String {
         let topRank = "TOP #\(recommendation.recommended.overallRank)"
         let valueRank = recommendation.recommended.valueRank.map { "V #\($0)" } ?? "V —"
-        return "USE \(recommendation.recommended.name) over \(recommendation.expensivePeer.name) · \(topRank) · \(valueRank)"
+        return "⚡︎ \(modelName(recommendation.recommended)) > \(modelName(recommendation.expensivePeer)) · \(topRank) · \(valueRank)"
     }
 
     private func comparisonScoreLabel(_ comparison: ClusterComparison) -> String {
-        "TOP · GPT \(comparison.gptScoreLeader.name) \(score(comparison.gptScoreLeader.combined)) · CLAUDE \(comparison.claudeScoreLeader.name) \(score(comparison.claudeScoreLeader.combined))"
+        "TOP · GPT \(modelName(comparison.gptScoreLeader)) \(score(comparison.gptScoreLeader.combined)) · CLAUDE \(modelName(comparison.claudeScoreLeader)) \(score(comparison.claudeScoreLeader.combined))"
     }
 
     private func comparisonValueLabel(_ comparison: ClusterComparison) -> String {
-        "VALUE · GPT \(comparison.gptValuePick.name) \(value(comparison.gptValuePick)) · CLAUDE \(comparison.claudeValuePick.name) \(value(comparison.claudeValuePick))"
+        "VALUE · GPT \(modelName(comparison.gptValuePick)) \(value(comparison.gptValuePick)) · CLAUDE \(modelName(comparison.claudeValuePick)) \(value(comparison.claudeValuePick))"
     }
 
     private func score(_ value: Double?) -> String {
@@ -150,6 +150,10 @@ struct MenuContentView: View {
     private func value(_ model: RankedModel) -> String {
         guard let value = model.valueScore else { return "—" }
         return String(format: "V %.1f", value)
+    }
+
+    private func modelName(_ model: RankedModel) -> String {
+        model.name.uppercased()
     }
 
     private func open(_ url: URL?) {

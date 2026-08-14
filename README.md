@@ -29,12 +29,13 @@ cost before changing a production model.
 
 The GPT and Claude clusters use the same deterministic gate. A `USE` candidate
 must be present in both visible lists: combined `TOP 20` and `TOP VALUE` top
-20. It is compared only with a more expensive same-cluster peer from `TOP 20`.
-It must be at least 25% cheaper, supply at least 25% more value, and be within
-`max(3 points, 7%)` of that peer's combined score (or have overlapping source
-confidence ranges). The best qualifying value gain is shown once per cluster.
-This lets a near-tied Terra-versus-Sol case surface Terra without deriving a
-recommendation from rows outside the two visible rankings.
+20. It must first be within `max(3 points, 7%)` of its cluster's `TOP 20`
+leader (or have overlapping source confidence ranges), so a low-score bargain
+cannot displace the intelligence frontier. It is then compared with the
+highest-scoring more expensive same-cluster peer from `TOP 20`; it must be at
+least 25% cheaper and supply at least 25% more value. The best-ranked
+`TOP VALUE` candidate is shown once per cluster. This makes Terra-over-Sol
+surface ahead of a lower-score Luna-over-GPT-5.5 pairing.
 
 ## Run
 

@@ -318,7 +318,21 @@ enum ClusterRecommendationBuilder {
     ) -> ClusterRecommendation? {
         let topValueIDs = Set(topValue20.map(\.id))
         let intelligenceRows = top20.filter { $0.cluster == cluster }
-        let candidateRows = intelligenceRows.filter { topValueIDs.contains($0.id) }
+        guard let intelligenceLeader = intelligenceRows.first,
+              let intelligenceLeaderScore = intelligenceLeader.combined else {
+            return nil
+        }
+        let candidateRows = intelligenceRows.filter { model in
+            guard let score = model.combined, topValueIDs.contains(model.id) else {
+                return false
+            }
+            return scoresAreComparable(
+                lowerCostScore: score,
+                higherCostScore: intelligenceLeaderScore,
+                lowerCostModel: model,
+                higherCostModel: intelligenceLeader
+            )
+        }
         var recommendations: [ClusterRecommendation] = []
 
         for recommended in candidateRows {
@@ -366,14 +380,19 @@ enum ClusterRecommendationBuilder {
         }
 
         return recommendations.sorted { lhs, rhs in
-            if lhs.valueMultiplier != rhs.valueMultiplier {
-                return lhs.valueMultiplier > rhs.valueMultiplier
-            }
-            if lhs.costSavingFraction != rhs.costSavingFraction {
-                return lhs.costSavingFraction > rhs.costSavingFraction
+            let leftValueRank = lhs.recommended.valueRank ?? .max
+            let rightValueRank = rhs.recommended.valueRank ?? .max
+            if leftValueRank != rightValueRank {
+                return leftValueRank < rightValueRank
             }
             if lhs.recommended.combined != rhs.recommended.combined {
                 return (lhs.recommended.combined ?? -.infinity) > (rhs.recommended.combined ?? -.infinity)
+            }
+            if lhs.expensivePeer.combined != rhs.expensivePeer.combined {
+                return (lhs.expensivePeer.combined ?? -.infinity) > (rhs.expensivePeer.combined ?? -.infinity)
+            }
+            if lhs.valueMultiplier != rhs.valueMultiplier {
+                return lhs.valueMultiplier > rhs.valueMultiplier
             }
             return lhs.recommended.overallRank < rhs.recommended.overallRank
         }.first
