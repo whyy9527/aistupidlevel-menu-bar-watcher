@@ -2,13 +2,25 @@ import AppKit
 import SwiftUI
 
 @MainActor
-final class NotchIslandController {
+final class NotchIslandController: ObservableObject {
+    private enum PreferenceKey {
+        static let isEnabled = "notchIsland.isEnabled"
+        static let focusedCluster = "notchIsland.focusedCluster"
+    }
+
+    @Published private(set) var isEnabled: Bool
+    @Published private(set) var focusedCluster: ModelCluster
+
     private var panel: NSPanel?
+    private var snapshot: DashboardSnapshot?
     private var recommendations: [ClusterRecommendation] = []
     private var isExpanded = false
     private var screenObserver: NSObjectProtocol?
 
     init() {
+        let defaults = UserDefaults.standard
+        isEnabled = defaults.object(forKey: PreferenceKey.isEnabled) as? Bool ?? true
+        focusedCluster = ModelCluster(rawValue: defaults.string(forKey: PreferenceKey.focusedCluster) ?? "") ?? .gpt
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil,
@@ -27,8 +39,42 @@ final class NotchIslandController {
     }
 
     func update(snapshot: DashboardSnapshot?) {
-        recommendations = snapshot?.inversionRecommendations ?? []
+        self.snapshot = snapshot
+        updateRecommendations()
         updatePanel(animated: false)
+    }
+
+    func setEnabled(_ enabled: Bool) {
+        guard isEnabled != enabled else { return }
+        isEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: PreferenceKey.isEnabled)
+
+        guard enabled else {
+            isExpanded = false
+            panel?.orderOut(nil)
+            return
+        }
+        updatePanel(animated: false)
+    }
+
+    func focus(on cluster: ModelCluster) {
+        guard focusedCluster != cluster else { return }
+        focusedCluster = cluster
+        UserDefaults.standard.set(cluster.rawValue, forKey: PreferenceKey.focusedCluster)
+        isExpanded = false
+        updateRecommendations()
+        updatePanel(animated: false)
+    }
+
+    private func updateRecommendations() {
+        let recommendation: ClusterRecommendation?
+        switch focusedCluster {
+        case .gpt:
+            recommendation = snapshot?.gptRecommendation
+        case .claude:
+            recommendation = snapshot?.claudeRecommendation
+        }
+        recommendations = recommendation.map { [$0] } ?? []
     }
 
     private func setExpanded(_ expanded: Bool) {
@@ -38,6 +84,7 @@ final class NotchIslandController {
     }
 
     private func requestExpansion(_ expanded: Bool) {
+        guard isEnabled else { return }
         if expanded {
             DispatchQueue.main.async { [weak self] in
                 self?.setExpanded(true)
@@ -55,6 +102,10 @@ final class NotchIslandController {
     }
 
     private func updatePanel(animated: Bool) {
+        guard isEnabled else {
+            panel?.orderOut(nil)
+            return
+        }
         let panel = panel ?? makePanel()
         self.panel = panel
         panel.contentView = NSHostingView(
@@ -164,37 +215,25 @@ private struct NotchIslandView: View {
             onHover(true)
         } label: {
             HStack(spacing: 7) {
-                smartCoreIcon
+                appIcon
                 Text(compactRecommendationNames)
                     .foregroundStyle(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.78)
             }
-            .font(.system(size: 12, weight: .bold, design: .rounded))
+            .font(.system(size: 13, weight: .bold, design: .rounded))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
-    @ViewBuilder
-    private var smartCoreIcon: some View {
-        if let image = smartCoreImage {
-            Image(nsImage: image)
-                .resizable()
-                .interpolation(.high)
-                .scaledToFit()
-                .frame(width: 18, height: 18)
-        } else {
-            Image(systemName: "sparkles")
-                .foregroundStyle(.cyan)
-        }
-    }
-
-    private var smartCoreImage: NSImage? {
-        guard let url = Bundle.main.url(forResource: "SmartCoreIcon", withExtension: "png") else {
-            return nil
-        }
-        return NSImage(contentsOf: url)
+    private var appIcon: some View {
+        Image(nsImage: NSApp.applicationIconImage)
+            .resizable()
+            .interpolation(.high)
+            .scaledToFit()
+            .frame(width: 18, height: 18)
+            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     }
 
     private var compactRecommendationNames: String {
@@ -202,16 +241,8 @@ private struct NotchIslandView: View {
             return "NO BETTER MODEL"
         }
         return recommendations
-            .map { compactModelName($0.recommended.name) }
+            .map { $0.recommended.name.uppercased() }
             .joined(separator: " · ")
-    }
-
-    private func compactModelName(_ name: String) -> String {
-        let parts = name.uppercased().split(separator: "-")
-        if parts.first == "CLAUDE", let family = parts.dropFirst().first {
-            return String(family)
-        }
-        return parts.last.map(String.init) ?? name.uppercased()
     }
 
     private var expandedContent: some View {

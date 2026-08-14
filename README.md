@@ -4,8 +4,9 @@ A native, dependency-free macOS menu-bar watcher for the public [AI Stupid
 Level leaderboard](https://aistupidlevel.info/?mode=leaderboard&period=latest&sortBy=combined).
 It keeps the combined top 20, value top 20, GPT cluster, Claude cluster, and a
 compact Claude-vs-GPT comparison one click away. A compact simulated notch
-stays centered at the top of the active screen; hover it to expand the current
-GPT/Claude intelligence inversions.
+stays centered at the top of the active screen. Choose whether it is enabled
+and whether it follows GPT or Claude from the menu; hover it to expand that
+cluster's current intelligence inversion.
 
 [![CI](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -116,9 +117,11 @@ reliability.
 - `TOP VALUE`: current price/performance ordering.
 - `GPT CLUSTER` and `CLAUDE CLUSTER`: provider-family rows plus their optional
   same-family `USE` pick.
-- Simulated notch: the compact state shows the number of current `⚡︎`
-  intelligence inversions. Hover it to expand the model names; click a row to
-  open the recommended model page.
+- Simulated notch: enable it from the menu and choose its GPT or Claude focus.
+  The compact state uses the app icon and shows the selected cluster's better
+  model; hover to expand the inversion and click it to open that model page.
+- `Data refreshed`: the last successful local snapshot refresh time. It is
+  retained when a later refresh fails.
 - `CLAUDE VS GPT`: each cluster's score leader and value pick.
 - `C`: source `combined` view, used for the combined top-20 ordering.
 - `R`: source `reasoning` view, a deep-reasoning signal.

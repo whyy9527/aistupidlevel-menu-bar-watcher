@@ -25,7 +25,7 @@ struct AIStupidLevelWatcherApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            MenuContentView(store: store)
+            MenuContentView(store: store, notchIsland: notchIsland)
         } label: {
             Label(store.statusBarTitle, systemImage: "chart.bar.fill")
         }

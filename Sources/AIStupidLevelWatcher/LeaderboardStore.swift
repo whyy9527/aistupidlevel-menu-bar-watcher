@@ -148,6 +148,13 @@ final class LeaderboardStore: ObservableObject {
         return "AI \(format(score))"
     }
 
+    var refreshStatusTitle: String {
+        guard let lastSuccessfulFetch else {
+            return isRefreshing ? "Data refresh: in progress" : "Data refresh: pending"
+        }
+        return "Data refreshed: \(Self.refreshTimeFormatter.string(from: lastSuccessfulFetch))"
+    }
+
     func refresh() async {
         guard !isRefreshing else { return }
         isRefreshing = true
@@ -198,4 +205,11 @@ final class LeaderboardStore: ObservableObject {
         guard let value else { return "—" }
         return String(format: "%.0f", value)
     }
+
+    private static let refreshTimeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .medium
+        return formatter
+    }()
 }

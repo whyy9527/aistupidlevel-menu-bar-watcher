@@ -3,6 +3,7 @@ import SwiftUI
 
 struct MenuContentView: View {
     @ObservedObject var store: LeaderboardStore
+    @ObservedObject var notchIsland: NotchIslandController
 
     private let leaderboardURL = URL(
         string: "https://aistupidlevel.info/?mode=leaderboard&period=latest&sortBy=combined"
@@ -67,6 +68,26 @@ struct MenuContentView: View {
             Text("⚠️ Update failed: \(error)")
             Text("The last successful snapshot is retained")
         }
+
+        Divider()
+        Toggle(
+            "Enable Notch Island",
+            isOn: Binding(
+                get: { notchIsland.isEnabled },
+                set: { notchIsland.setEnabled($0) }
+            )
+        )
+
+        Menu("Notch focus: \(notchIsland.focusedCluster.notchTitle)") {
+            Button(notchIsland.focusedCluster == .gpt ? "✓ GPT" : "GPT") {
+                notchIsland.focus(on: .gpt)
+            }
+            Button(notchIsland.focusedCluster == .claude ? "✓ Claude" : "Claude") {
+                notchIsland.focus(on: .claude)
+            }
+        }
+
+        Text(store.refreshStatusTitle)
 
         Divider()
         Button(store.isRefreshing ? "Refreshing…" : "Refresh") {

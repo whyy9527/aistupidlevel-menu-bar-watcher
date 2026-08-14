@@ -18,7 +18,7 @@ mkdir -p "${app_dir}/Contents/MacOS" "${app_dir}/Contents/Resources" "$agent_dir
 cp "$bin_dir/AIStupidLevelWatcher" "$app_binary"
 cp "$repo_dir/Resources/Info.plist" "${app_dir}/Contents/Info.plist"
 cp "$repo_dir/Resources/AppIcon.icns" "${app_dir}/Contents/Resources/AppIcon.icns"
-cp "$repo_dir/Resources/SmartCoreIcon.png" "${app_dir}/Contents/Resources/SmartCoreIcon.png"
+rm -f "${app_dir}/Contents/Resources/SmartCoreIcon.png"
 chmod 755 "$app_binary"
 codesign --force --sign - "$app_dir"
 

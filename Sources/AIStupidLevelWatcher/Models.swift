@@ -156,6 +156,15 @@ enum ModelCluster: String, CaseIterable, Hashable {
         }
     }
 
+    var notchTitle: String {
+        switch self {
+        case .gpt:
+            return "GPT"
+        case .claude:
+            return "Claude"
+        }
+    }
+
     static func resolve(provider: String, name: String) -> Self? {
         let normalizedProvider = provider.lowercased()
         let normalizedName = name.lowercased()
