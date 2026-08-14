@@ -37,6 +37,23 @@ final class NotchIslandController {
         updatePanel(animated: true)
     }
 
+    private func requestExpansion(_ expanded: Bool) {
+        if expanded {
+            DispatchQueue.main.async { [weak self] in
+                self?.setExpanded(true)
+            }
+            return
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            guard let self,
+                  self.panel?.frame.contains(NSEvent.mouseLocation) != true else {
+                return
+            }
+            self.setExpanded(false)
+        }
+    }
+
     private func updatePanel(animated: Bool) {
         let panel = panel ?? makePanel()
         self.panel = panel
@@ -45,7 +62,7 @@ final class NotchIslandController {
                 recommendations: recommendations,
                 isExpanded: isExpanded,
                 onHover: { [weak self] hovering in
-                    self?.setExpanded(hovering)
+                    self?.requestExpansion(hovering)
                 }
             )
         )
@@ -63,7 +80,7 @@ final class NotchIslandController {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
-        panel.level = .statusBar
+        panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
