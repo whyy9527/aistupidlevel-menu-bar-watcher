@@ -186,7 +186,7 @@ final class NotchIslandController: ObservableObject {
 private enum NotchIslandLayout {
     static func size(for modelCount: Int, expanded: Bool) -> CGSize {
         guard expanded else {
-            return CGSize(width: 196, height: 34)
+            return CGSize(width: 196, height: NSStatusBar.system.thickness)
         }
         return CGSize(width: 520, height: modelCount == 0 ? 96 : 132)
     }
@@ -218,7 +218,7 @@ private struct NotchIslandView: View {
         } label: {
             HStack(spacing: 7) {
                 appIcon
-                Text("\(cluster.notchTitle.uppercased()) TOP 3")
+                Text(models.first?.name.uppercased() ?? "\(cluster.notchTitle.uppercased()) TOP 1")
                     .foregroundStyle(.white)
             }
             .font(.system(size: 13, weight: .bold, design: .rounded))

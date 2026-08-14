@@ -15,8 +15,7 @@ the menu; hover it to expand that cluster's top three models.
 The useful signal is comparative rather than absolute:
 
 - see the gap between models on the same published scoring system;
-- see a same-family `USE` pick when a lower-cost model remains near the score
-  of a more expensive peer while materially improving price/performance;
+- see the source's current ranking within the GPT and Claude provider families;
 - compare a model's `reasoning` and `tooling` lenses instead of treating one
   combined number as a complete model verdict.
 
@@ -101,8 +100,9 @@ reliability.
 - `TOP VALUE`: current price/performance ordering.
 - `GPT CLUSTER` and `CLAUDE CLUSTER`: provider-family rankings.
 - Simulated notch: enable it from the menu and choose its GPT or Claude focus.
-  The compact state shows that cluster's `TOP 3`; hover to see the three model
-  names and their combined scores, then click one to open its model page.
+  Its compact state shows the focused cluster's top-ranked model and matches the
+  menu-bar height; hover to see the top three model names and their combined
+  scores, then click one to open its model page.
 - `Data refreshed`: the last successful local snapshot refresh time. It is
   retained when a later refresh fails.
 - `C`: source `combined` view, used for the combined top-20 ordering.
