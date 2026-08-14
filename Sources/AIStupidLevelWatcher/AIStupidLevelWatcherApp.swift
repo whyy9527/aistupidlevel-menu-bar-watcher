@@ -24,14 +24,8 @@ struct AIStupidLevelWatcherApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra {
+        MenuBarExtra(store.statusBarTitle, systemImage: "bolt.fill") {
             MenuContentView(store: store, notchIsland: notchIsland)
-        } label: {
-            Image(nsImage: NSApp.applicationIconImage)
-                .resizable()
-                .interpolation(.high)
-                .scaledToFit()
-                .frame(width: 18, height: 18)
         }
         .menuBarExtraStyle(.menu)
     }
