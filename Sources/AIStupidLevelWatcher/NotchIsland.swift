@@ -203,8 +203,6 @@ private enum NotchIslandLayout {
 }
 
 private enum NotchIslandPalette {
-    // A lighter violet drawn from the App Icon keeps small text legible.
-    static let background = Color(red: 0.20, green: 0.15, blue: 0.33)
     static let accent = Color(red: 0.76, green: 0.64, blue: 1.00)
 }
 
@@ -223,7 +221,7 @@ private struct NotchIslandView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(NotchIslandPalette.background, in: NotchShape())
+        .background(.black, in: NotchShape())
         .contentShape(NotchShape())
         .onHover(perform: onHover)
     }
