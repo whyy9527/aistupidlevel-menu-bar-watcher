@@ -102,8 +102,8 @@ reliability.
 - Simulated notch: enable it from the menu and choose its GPT or Claude focus.
   Its compact state shows the focused cluster's top-ranked model and matches the
   physical camera-notch height when available (or a 32pt floating island on
-  other displays); hover to see the top three model names and their combined
-  scores, then click one to open its model page.
+  other displays); hover to see the top three model names and their
+  `C`/`R`/`T` scores, then click one to open its model page.
 - `Data refreshed`: the last successful local snapshot refresh time. It is
   retained when a later refresh fails.
 - `C`: source `combined` view, used for the combined top-20 ordering.

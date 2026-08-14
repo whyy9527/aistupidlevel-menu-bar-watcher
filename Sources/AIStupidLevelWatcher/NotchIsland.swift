@@ -271,7 +271,7 @@ private struct NotchIslandView: View {
                                 .foregroundStyle(.yellow)
                             Text(model.name.uppercased())
                             Spacer(minLength: 0)
-                            Text(model.combined.map { String(format: "C %.0f", $0) } ?? "C —")
+                            Text(metrics(for: model))
                                 .foregroundStyle(.white.opacity(0.7))
                         }
                         .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -286,6 +286,14 @@ private struct NotchIslandView: View {
         .padding(.horizontal, 22)
         .padding(.top, 11)
         .padding(.bottom, 15)
+    }
+
+    private func metrics(for model: RankedModel) -> String {
+        "C \(score(model.combined)) · R \(score(model.reasoning)) · T \(score(model.tooling))"
+    }
+
+    private func score(_ value: Double?) -> String {
+        value.map { String(format: "%.0f", $0) } ?? "—"
     }
 }
 
