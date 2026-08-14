@@ -1,0 +1,4 @@
+interface:
+  display_name: "SwiftUI Notch Panel Stability"
+  short_description: "Prevent SwiftUI macOS overlay crashes"
+  default_prompt: "Use $swiftui-notch-panel-stability to stabilize a macOS notch overlay."
