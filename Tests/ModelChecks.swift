@@ -69,8 +69,6 @@ struct ModelChecks {
         precondition(gptRecommendation.recommended.name == "gpt-5.6-terra")
         precondition(gptRecommendation.expensivePeer.name == "gpt-5.6-sol")
         precondition(gptRecommendation.scoreDifference == 1)
-        precondition(abs(gptRecommendation.costSavingFraction - 0.6) < 0.0001)
-        precondition(gptRecommendation.valueMultiplier > 2)
         precondition(gptRecommendation.recommended.valueRank == 2)
 
         precondition(snapshot.claudeRecommendation == nil)
@@ -126,6 +124,54 @@ struct ModelChecks {
                 topValue20: [valueOnlyCandidate]
             ) == nil
         )
+
+        let slightlyCheaperCandidate = RankedModel(
+            id: "slightly-cheaper-candidate",
+            name: "gpt-5.6-terra",
+            provider: "openai",
+            combined: 75,
+            reasoning: nil,
+            tooling: nil,
+            trend: nil,
+            status: nil,
+            lastUpdated: nil,
+            confidenceLower: nil,
+            confidenceUpper: nil,
+            standardError: nil,
+            overallRank: 1,
+            cluster: .gpt,
+            clusterRank: 1,
+            price: .init(inputPerMillion: 0.98, outputPerMillion: 8.82),
+            valueRank: 1
+        )
+        let slightlyMoreExpensivePeer = RankedModel(
+            id: "slightly-more-expensive-peer",
+            name: "gpt-5.5",
+            provider: "openai",
+            combined: 74,
+            reasoning: nil,
+            tooling: nil,
+            trend: nil,
+            status: nil,
+            lastUpdated: nil,
+            confidenceLower: nil,
+            confidenceUpper: nil,
+            standardError: nil,
+            overallRank: 2,
+            cluster: .gpt,
+            clusterRank: 2,
+            price: .init(inputPerMillion: 1, outputPerMillion: 9),
+            valueRank: nil
+        )
+        let smallSavingRecommendation = try! require(
+            ClusterRecommendationBuilder.best(
+                in: .gpt,
+                top20: [slightlyCheaperCandidate, slightlyMoreExpensivePeer],
+                topValue20: [slightlyCheaperCandidate]
+            )
+        )
+        precondition(smallSavingRecommendation.recommended.id == slightlyCheaperCandidate.id)
+        precondition(smallSavingRecommendation.expensivePeer.id == slightlyMoreExpensivePeer.id)
 
         let unavailable = #"{"id":"1","name":"model","provider":"openai","currentScore":"unavailable"}"#.data(using: .utf8)!
         let decoded = try! JSONDecoder().decode(ModelScore.self, from: unavailable)

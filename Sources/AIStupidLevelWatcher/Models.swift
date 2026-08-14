@@ -217,8 +217,6 @@ struct ClusterRecommendation: Hashable {
     let recommended: RankedModel
     let expensivePeer: RankedModel
     let scoreDifference: Double
-    let costSavingFraction: Double
-    let valueMultiplier: Double
 }
 
 struct ClusterComparison: Hashable {
@@ -305,10 +303,8 @@ struct DashboardSnapshot {
 
 enum ClusterRecommendationBuilder {
     /// A candidate must stay near the cluster frontier, then strictly beat a
-    /// more expensive peer while saving at least 25% of blended cost and
-    /// delivering at least 25% more value.
-    private static let minimumCostSavingFraction = 0.25
-    private static let minimumValueMultiplier = 1.25
+    /// more expensive peer. TOP 20 and TOP VALUE provide the selection gate;
+    /// no additional percentage threshold is applied.
     private static let minimumScoreTolerance = 3.0
     private static let relativeScoreTolerance = 0.07
 
@@ -337,7 +333,6 @@ enum ClusterRecommendationBuilder {
         for recommended in candidateRows {
             guard let recommendedScore = recommended.combined,
                   let recommendedCost = recommended.blendedCostPerMillion,
-                  let recommendedValue = recommended.valueScore,
                   recommendedCost > 0 else {
                 continue
             }
@@ -346,17 +341,11 @@ enum ClusterRecommendationBuilder {
                 guard recommended.id != expensivePeer.id,
                       let expensiveScore = expensivePeer.combined,
                       let expensiveCost = expensivePeer.blendedCostPerMillion,
-                      let expensiveValue = expensivePeer.valueScore,
-                      expensiveCost > recommendedCost,
-                      expensiveValue > 0 else {
+                      expensiveCost > recommendedCost else {
                     continue
                 }
 
-                let costSavingFraction = 1 - (recommendedCost / expensiveCost)
-                let valueMultiplier = recommendedValue / expensiveValue
-                guard recommendedScore > expensiveScore,
-                      costSavingFraction >= minimumCostSavingFraction,
-                      valueMultiplier >= minimumValueMultiplier else {
+                guard recommendedScore > expensiveScore else {
                     continue
                 }
 
@@ -365,9 +354,7 @@ enum ClusterRecommendationBuilder {
                         cluster: cluster,
                         recommended: recommended,
                         expensivePeer: expensivePeer,
-                        scoreDifference: recommendedScore - expensiveScore,
-                        costSavingFraction: costSavingFraction,
-                        valueMultiplier: valueMultiplier
+                        scoreDifference: recommendedScore - expensiveScore
                     )
                 )
             }
@@ -384,9 +371,6 @@ enum ClusterRecommendationBuilder {
             }
             if lhs.expensivePeer.combined != rhs.expensivePeer.combined {
                 return (lhs.expensivePeer.combined ?? -.infinity) > (rhs.expensivePeer.combined ?? -.infinity)
-            }
-            if lhs.valueMultiplier != rhs.valueMultiplier {
-                return lhs.valueMultiplier > rhs.valueMultiplier
             }
             return lhs.recommended.overallRank < rhs.recommended.overallRank
         }.first

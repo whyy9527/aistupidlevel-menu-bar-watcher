@@ -33,12 +33,12 @@ must be present in both visible lists: combined `TOP 20` and `TOP VALUE` top
 leader by the published combined point score; confidence-range overlap does not
 override that gate, so a low-score bargain cannot displace the intelligence
 frontier. It is then compared with the
-highest-scoring more expensive same-cluster peer from `TOP 20`; it must be at
-least 25% cheaper and supply at least 25% more value. The best-ranked
-`TOP VALUE` candidate is shown once per cluster only when it has a strict
-point-score lead over that peer. It is shown as an `⚡︎` intelligence inversion;
-there is no near-score `VALUE` substitute. This makes Terra-over-Sol surface
-while a lower-score Luna-over-GPT-5.5 pairing cannot.
+highest-scoring more expensive same-cluster peer from `TOP 20`; it must simply
+be cheaper. The best-ranked `TOP VALUE` candidate is shown once per cluster
+only when it has a strict point-score lead over that peer. It is shown as an
+`⚡︎` intelligence inversion; there is no near-score `VALUE` substitute. This
+makes Terra-over-Sol surface while a lower-score Luna-over-GPT-5.5 pairing
+cannot.
 
 ## Run
 
