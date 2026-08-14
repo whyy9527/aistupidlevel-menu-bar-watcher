@@ -80,9 +80,17 @@ final class NotchIslandController {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
-        panel.level = .popUpMenu
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.isFloatingPanel = true
+        // Setting isFloatingPanel after a custom level resets it to floating.
+        // The screen-saver auxiliary level occupies the simulated-notch area.
+        panel.level = .screenSaver
+        panel.collectionBehavior = [
+            .canJoinAllSpaces,
+            .canJoinAllApplications,
+            .fullScreenAuxiliary,
+            .stationary,
+            .ignoresCycle
+        ]
         panel.hidesOnDeactivate = false
         panel.becomesKeyOnlyIfNeeded = true
         panel.isMovableByWindowBackground = false

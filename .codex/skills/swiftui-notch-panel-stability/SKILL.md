@@ -19,6 +19,11 @@ with an `AttributeGraph` precondition failure.
 be drawn below the system menu bar; its frame must use `screen.frame`, and a
 notch overlay intended to cover the bar needs an appropriate higher level.
 
+`NSPanel.isFloatingPanel = true` resets a previously assigned custom level to
+`.floating`. Set that property before `.screenSaver`; otherwise WindowServer
+reports layer `3` and clamps the panel below the menu bar instead of allowing
+the physical top edge.
+
 ## Procedure
 
 1. Keep AppKit panel ownership in an `ObservableObject` controller, separate
@@ -31,9 +36,11 @@ notch overlay intended to cover the bar needs an appropriate higher level.
 4. Use a SwiftUI `Button` for a compact island that needs to be testable or
    clickable. Confirm its AX tree exposes a `button`; do not assume an
    `onTapGesture` is accessible.
-5. Anchor the panel with `screen.frame.maxY - panelHeight`. Use `.popUpMenu`
-   only when the explicit product requirement is to cover the menu bar; otherwise
-   prefer `.statusBar` to avoid competing with system UI.
+5. Set `isFloatingPanel` before the desired level. For an explicit physical-
+   top simulated notch, use `.screenSaver` with `.canJoinAllSpaces`,
+   `.canJoinAllApplications`, `.fullScreenAuxiliary`, and `.stationary`.
+   Anchor it with `screen.frame.maxY - panelHeight`. Use `.statusBar` when
+   covering the system menu bar is not a product requirement.
 6. Keep the compact and expanded views in the same panel controller and verify
    both transitions before changing app-wide state.
 
@@ -43,6 +50,8 @@ notch overlay intended to cover the bar needs an appropriate higher level.
 - Install the app bundle and verify its LaunchAgent reports `state = running`.
 - Capture a whole-screen screenshot: the compact island must start at the
   physical top edge, not below the menu bar.
+- Inspect `CGWindowListCopyWindowInfo`: a physical-top screen-saver panel has
+  `Y = 0` and layer `1000`; layer `3` means `isFloatingPanel` overwrote it.
 - Use Accessibility to click the compact `button`; confirm the expanded rows
   appear and the same service PID remains alive with an empty error log.
 
@@ -50,6 +59,7 @@ notch overlay intended to cover the bar needs an appropriate higher level.
 
 - Do not construct a hosting panel in a SwiftUI state-object initializer.
 - Do not replace panel content synchronously during a SwiftUI action or hover.
-- Do not use `visibleFrame` for a top-edge overlay or raise the panel above
-  `.popUpMenu`; either error yields misleading placement or blocks system UI.
+- Do not set `isFloatingPanel` after a custom `panel.level`.
+- Do not use `visibleFrame` for a top-edge overlay. Reserve `.screenSaver` for
+  a deliberately small, noncritical overlay because it sits above system UI.
 - Do not describe a simulated panel as controlling the physical camera notch.
