@@ -69,17 +69,11 @@ struct ModelChecks {
         precondition(gptRecommendation.recommended.name == "gpt-5.6-terra")
         precondition(gptRecommendation.expensivePeer.name == "gpt-5.6-sol")
         precondition(gptRecommendation.scoreDifference == 1)
-        precondition(gptRecommendation.isIntelligenceInversion)
         precondition(abs(gptRecommendation.costSavingFraction - 0.6) < 0.0001)
         precondition(gptRecommendation.valueMultiplier > 2)
         precondition(gptRecommendation.recommended.valueRank == 2)
 
-        let claudeRecommendation = try! require(snapshot.claudeRecommendation)
-        precondition(claudeRecommendation.recommended.name == "claude-sonnet-5")
-        precondition(claudeRecommendation.expensivePeer.name == "claude-opus-5")
-        precondition(claudeRecommendation.scoreDifference == -3)
-        precondition(!claudeRecommendation.isIntelligenceInversion)
-        precondition(claudeRecommendation.valueMultiplier > 1.5)
+        precondition(snapshot.claudeRecommendation == nil)
 
         let comparison = try! require(snapshot.clusterComparison)
         precondition(comparison.gptScoreLeader.name == "gpt-5.6-terra")

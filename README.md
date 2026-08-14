@@ -35,10 +35,10 @@ override that gate, so a low-score bargain cannot displace the intelligence
 frontier. It is then compared with the
 highest-scoring more expensive same-cluster peer from `TOP 20`; it must be at
 least 25% cheaper and supply at least 25% more value. The best-ranked
-`TOP VALUE` candidate is shown once per cluster. A strict point-score lead is
-an `⚡︎` intelligence inversion and takes priority over a near-score `VALUE`
-substitute. This makes Terra-over-Sol surface ahead of a lower-score
-Luna-over-GPT-5.5 pairing.
+`TOP VALUE` candidate is shown once per cluster only when it has a strict
+point-score lead over that peer. It is shown as an `⚡︎` intelligence inversion;
+there is no near-score `VALUE` substitute. This makes Terra-over-Sol surface
+while a lower-score Luna-over-GPT-5.5 pairing cannot.
 
 ## Run
 

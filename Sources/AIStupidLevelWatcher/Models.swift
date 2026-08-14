@@ -219,10 +219,6 @@ struct ClusterRecommendation: Hashable {
     let scoreDifference: Double
     let costSavingFraction: Double
     let valueMultiplier: Double
-
-    var isIntelligenceInversion: Bool {
-        scoreDifference > 0
-    }
 }
 
 struct ClusterComparison: Hashable {
@@ -308,8 +304,9 @@ struct DashboardSnapshot {
 }
 
 enum ClusterRecommendationBuilder {
-    /// A lower-cost model must retain a near-equivalent score, save at least
-    /// 25% of the blended price, and deliver at least 25% more value.
+    /// A candidate must stay near the cluster frontier, then strictly beat a
+    /// more expensive peer while saving at least 25% of blended cost and
+    /// delivering at least 25% more value.
     private static let minimumCostSavingFraction = 0.25
     private static let minimumValueMultiplier = 1.25
     private static let minimumScoreTolerance = 3.0
@@ -357,12 +354,9 @@ enum ClusterRecommendationBuilder {
 
                 let costSavingFraction = 1 - (recommendedCost / expensiveCost)
                 let valueMultiplier = recommendedValue / expensiveValue
-                guard costSavingFraction >= minimumCostSavingFraction,
-                      valueMultiplier >= minimumValueMultiplier,
-                      scoresAreComparable(
-                        lowerCostScore: recommendedScore,
-                        higherCostScore: expensiveScore
-                      ) else {
+                guard recommendedScore > expensiveScore,
+                      costSavingFraction >= minimumCostSavingFraction,
+                      valueMultiplier >= minimumValueMultiplier else {
                     continue
                 }
 
@@ -380,9 +374,6 @@ enum ClusterRecommendationBuilder {
         }
 
         return recommendations.sorted { lhs, rhs in
-            if lhs.isIntelligenceInversion != rhs.isIntelligenceInversion {
-                return lhs.isIntelligenceInversion
-            }
             let leftValueRank = lhs.recommended.valueRank ?? .max
             let rightValueRank = rhs.recommended.valueRank ?? .max
             if leftValueRank != rightValueRank {
