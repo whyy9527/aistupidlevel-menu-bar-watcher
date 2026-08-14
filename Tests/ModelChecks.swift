@@ -5,12 +5,26 @@ struct ModelChecks {
     static func main() {
         let combined = [
             ModelScore(id: "a", name: "alpha", provider: "other", currentScore: 90),
-            ModelScore(id: "terra", name: "gpt-5.6-terra", provider: "openai", currentScore: 73),
+            ModelScore(
+                id: "terra",
+                name: "gpt-5.6-terra",
+                provider: "openai",
+                currentScore: 73,
+                confidenceLower: 65,
+                confidenceUpper: 80
+            ),
             ModelScore(id: "sol", name: "gpt-5.6-sol", provider: "openai", currentScore: 72),
             ModelScore(id: "opus", name: "claude-opus-5", provider: "anthropic", currentScore: 72),
             ModelScore(id: "codex", name: "gpt-5.3-codex", provider: "openai", currentScore: 70),
             ModelScore(id: "sonnet", name: "claude-sonnet-5", provider: "anthropic", currentScore: 69),
-            ModelScore(id: "luna", name: "gpt-5.6-luna", provider: "openai", currentScore: 61)
+            ModelScore(
+                id: "luna",
+                name: "gpt-5.6-luna",
+                provider: "openai",
+                currentScore: 61,
+                confidenceLower: 60,
+                confidenceUpper: 78
+            )
         ]
         let reasoning = [
             ModelScore(id: "a", name: "alpha", provider: "other", currentScore: 40),
@@ -55,6 +69,7 @@ struct ModelChecks {
         precondition(gptRecommendation.recommended.name == "gpt-5.6-terra")
         precondition(gptRecommendation.expensivePeer.name == "gpt-5.6-sol")
         precondition(gptRecommendation.scoreDifference == 1)
+        precondition(gptRecommendation.isIntelligenceInversion)
         precondition(abs(gptRecommendation.costSavingFraction - 0.6) < 0.0001)
         precondition(gptRecommendation.valueMultiplier > 2)
         precondition(gptRecommendation.recommended.valueRank == 2)
@@ -63,6 +78,7 @@ struct ModelChecks {
         precondition(claudeRecommendation.recommended.name == "claude-sonnet-5")
         precondition(claudeRecommendation.expensivePeer.name == "claude-opus-5")
         precondition(claudeRecommendation.scoreDifference == -3)
+        precondition(!claudeRecommendation.isIntelligenceInversion)
         precondition(claudeRecommendation.valueMultiplier > 1.5)
 
         let comparison = try! require(snapshot.clusterComparison)

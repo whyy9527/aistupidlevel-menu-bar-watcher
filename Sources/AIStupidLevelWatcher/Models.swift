@@ -219,6 +219,10 @@ struct ClusterRecommendation: Hashable {
     let scoreDifference: Double
     let costSavingFraction: Double
     let valueMultiplier: Double
+
+    var isIntelligenceInversion: Bool {
+        scoreDifference > 0
+    }
 }
 
 struct ClusterComparison: Hashable {
@@ -328,9 +332,7 @@ enum ClusterRecommendationBuilder {
             }
             return scoresAreComparable(
                 lowerCostScore: score,
-                higherCostScore: intelligenceLeaderScore,
-                lowerCostModel: model,
-                higherCostModel: intelligenceLeader
+                higherCostScore: intelligenceLeaderScore
             )
         }
         var recommendations: [ClusterRecommendation] = []
@@ -359,9 +361,7 @@ enum ClusterRecommendationBuilder {
                       valueMultiplier >= minimumValueMultiplier,
                       scoresAreComparable(
                         lowerCostScore: recommendedScore,
-                        higherCostScore: expensiveScore,
-                        lowerCostModel: recommended,
-                        higherCostModel: expensivePeer
+                        higherCostScore: expensiveScore
                       ) else {
                     continue
                 }
@@ -380,6 +380,9 @@ enum ClusterRecommendationBuilder {
         }
 
         return recommendations.sorted { lhs, rhs in
+            if lhs.isIntelligenceInversion != rhs.isIntelligenceInversion {
+                return lhs.isIntelligenceInversion
+            }
             let leftValueRank = lhs.recommended.valueRank ?? .max
             let rightValueRank = rhs.recommended.valueRank ?? .max
             if leftValueRank != rightValueRank {
@@ -400,25 +403,13 @@ enum ClusterRecommendationBuilder {
 
     private static func scoresAreComparable(
         lowerCostScore: Double,
-        higherCostScore: Double,
-        lowerCostModel: RankedModel,
-        higherCostModel: RankedModel
+        higherCostScore: Double
     ) -> Bool {
         let tolerance = max(
             minimumScoreTolerance,
             abs(higherCostScore) * relativeScoreTolerance
         )
-        if lowerCostScore >= higherCostScore - tolerance {
-            return true
-        }
-
-        guard let lowerBound = lowerCostModel.confidenceLower,
-              let upperBound = lowerCostModel.confidenceUpper,
-              let peerLowerBound = higherCostModel.confidenceLower,
-              let peerUpperBound = higherCostModel.confidenceUpper else {
-            return false
-        }
-        return max(lowerBound, peerLowerBound) <= min(upperBound, peerUpperBound)
+        return lowerCostScore >= higherCostScore - tolerance
     }
 }
 
