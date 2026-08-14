@@ -19,6 +19,7 @@ cp "$bin_dir/AIStupidLevelWatcher" "$app_binary"
 cp "$repo_dir/Resources/Info.plist" "${app_dir}/Contents/Info.plist"
 cp "$repo_dir/Resources/AppIcon.icns" "${app_dir}/Contents/Resources/AppIcon.icns"
 chmod 755 "$app_binary"
+codesign --force --sign - "$app_dir"
 
 sed \
     -e "s|__APP_BINARY__|${app_binary}|g" \
