@@ -14,9 +14,6 @@ struct AIStupidLevelWatcherApp: App {
                 controller.update(snapshot: snapshot)
             }
         )
-        DispatchQueue.main.async {
-            controller.update(snapshot: nil)
-        }
         // Keep this as a menu-bar utility instead of adding a Dock icon.
         NSApplication.shared.setActivationPolicy(.accessory)
     }
