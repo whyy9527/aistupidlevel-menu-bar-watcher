@@ -270,10 +270,6 @@ struct DashboardSnapshot {
         recommendation(for: .claude)
     }
 
-    var inversionRecommendations: [ClusterRecommendation] {
-        [gptRecommendation, claudeRecommendation].compactMap { $0 }
-    }
-
     var clusterComparison: ClusterComparison? {
         guard let gptScoreLeader = gptRows.first,
               let claudeScoreLeader = claudeRows.first,

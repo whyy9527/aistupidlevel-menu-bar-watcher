@@ -3,9 +3,7 @@
 A native, dependency-free macOS menu-bar watcher for the public [AI Stupid
 Level leaderboard](https://aistupidlevel.info/?mode=leaderboard&period=latest&sortBy=combined).
 It keeps the combined top 20, value top 20, GPT cluster, Claude cluster, and a
-compact Claude-vs-GPT comparison one click away. A persistent dynamic-island-
-style pill at the top of the screen shows current GPT/Claude intelligence
-inversions without opening the menu.
+compact Claude-vs-GPT comparison one click away.
 
 [![CI](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -116,9 +114,6 @@ reliability.
 - `TOP VALUE`: current price/performance ordering.
 - `GPT CLUSTER` and `CLAUDE CLUSTER`: provider-family rows plus their optional
   same-family `USE` pick.
-- Persistent island: current `⚡︎` intelligence inversions. It remains visible
-  with a loading or no-inversion state, and each inversion can be clicked to
-  open the recommended model page.
 - `CLAUDE VS GPT`: each cluster's score leader and value pick.
 - `C`: source `combined` view, used for the combined top-20 ordering.
 - `R`: source `reasoning` view, a deep-reasoning signal.
