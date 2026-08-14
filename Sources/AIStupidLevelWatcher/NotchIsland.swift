@@ -203,8 +203,9 @@ private enum NotchIslandLayout {
 }
 
 private enum NotchIslandPalette {
-    // The deep violet background from the App Icon.
-    static let accent = Color(red: 0.38, green: 0.16, blue: 0.90)
+    // A lighter violet drawn from the App Icon keeps small text legible.
+    static let background = Color(red: 0.20, green: 0.15, blue: 0.33)
+    static let accent = Color(red: 0.76, green: 0.64, blue: 1.00)
 }
 
 private struct NotchIslandView: View {
@@ -222,7 +223,7 @@ private struct NotchIslandView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.black, in: NotchShape())
+        .background(NotchIslandPalette.background, in: NotchShape())
         .contentShape(NotchShape())
         .onHover(perform: onHover)
     }
@@ -231,38 +232,19 @@ private struct NotchIslandView: View {
         Button {
             onHover(true)
         } label: {
-            HStack(spacing: 7) {
-                appIcon
-                Text(models.first?.name.uppercased() ?? "\(cluster.notchTitle.uppercased()) TOP 1")
-                    .foregroundStyle(.white)
-            }
+            Text(models.first?.name.uppercased() ?? "\(cluster.notchTitle.uppercased()) TOP 1")
+                .foregroundStyle(.white)
             .font(.system(size: 13, weight: .bold, design: .rounded))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
-    private var appIcon: some View {
-        appIcon(size: 18)
-    }
-
-    private func appIcon(size: CGFloat) -> some View {
-        Image(nsImage: NSApp.applicationIconImage)
-            .resizable()
-            .interpolation(.high)
-            .scaledToFit()
-            .frame(width: size, height: size)
-            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-    }
-
     private var expandedContent: some View {
         VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 7) {
-                appIcon(size: 14)
-                Text("\(cluster.notchTitle.uppercased()) TOP 3")
-                    .foregroundStyle(.white.opacity(0.68))
-            }
-            .font(.system(size: 11, weight: .bold, design: .rounded))
+            Text("\(cluster.notchTitle.uppercased()) TOP 3")
+                .foregroundStyle(.white.opacity(0.84))
+                .font(.system(size: 11, weight: .bold, design: .rounded))
 
             if models.isEmpty {
                 Text("NO \(cluster.notchTitle.uppercased()) MODELS")
@@ -280,7 +262,7 @@ private struct NotchIslandView: View {
                             Text(model.name.uppercased())
                             Spacer(minLength: 0)
                             Text(metrics(for: model))
-                                .foregroundStyle(.white.opacity(0.7))
+                                .foregroundStyle(.white.opacity(0.86))
                         }
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)

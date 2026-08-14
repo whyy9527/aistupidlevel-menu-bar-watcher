@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <!-- A single-colour high-performance gauge for the macOS menu bar. -->
+  <path d="M2.25 10.9a5.75 5.75 0 0 1 11.5 0" fill="none" stroke="#000" stroke-width="1.9" stroke-linecap="round"/>
+  <path d="M8 10.9 11.55 6.75" fill="none" stroke="#000" stroke-width="1.7" stroke-linecap="round"/>
+  <circle cx="8" cy="10.9" r="1.6" fill="#000"/>
+</svg>

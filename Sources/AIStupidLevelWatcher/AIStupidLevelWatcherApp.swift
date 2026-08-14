@@ -1,6 +1,18 @@
 import AppKit
 import SwiftUI
 
+private enum IconAssets {
+    static let statusBar: NSImage = {
+        guard let url = Bundle.main.url(forResource: "StatusBarIcon", withExtension: "pdf"),
+              let image = NSImage(contentsOf: url) else {
+            preconditionFailure("StatusBarIcon.pdf is required in the app bundle")
+        }
+        image.isTemplate = true
+        image.size = NSSize(width: 16, height: 16)
+        return image
+    }()
+}
+
 @main
 struct AIStupidLevelWatcherApp: App {
     @StateObject private var store: LeaderboardStore
@@ -24,8 +36,12 @@ struct AIStupidLevelWatcherApp: App {
     }
 
     var body: some Scene {
-        MenuBarExtra(store.statusBarTitle, systemImage: "bolt.fill") {
+        MenuBarExtra {
             MenuContentView(store: store, notchIsland: notchIsland)
+        } label: {
+            Image(nsImage: IconAssets.statusBar)
+                .renderingMode(.template)
+                .accessibilityLabel(store.statusBarTitle)
         }
         .menuBarExtraStyle(.menu)
     }
