@@ -80,7 +80,7 @@ final class NotchIslandController {
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
-        panel.level = NSWindow.Level(rawValue: NSWindow.Level.statusBar.rawValue + 1)
+        panel.level = .popUpMenu
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
@@ -152,17 +152,19 @@ private struct NotchIslandView: View {
     }
 
     private var compactContent: some View {
-        HStack(spacing: 8) {
-            Image(systemName: recommendations.isEmpty ? "bolt.slash.fill" : "bolt.fill")
-                .foregroundStyle(recommendations.isEmpty ? .white.opacity(0.55) : .yellow)
-            Text("\(recommendations.count)")
-                .foregroundStyle(.white)
-        }
-        .font(.system(size: 13, weight: .bold, design: .rounded))
-        .contentShape(Rectangle())
-        .onTapGesture {
+        Button {
             onHover(true)
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: recommendations.isEmpty ? "bolt.slash.fill" : "bolt.fill")
+                    .foregroundStyle(recommendations.isEmpty ? .white.opacity(0.55) : .yellow)
+                Text("\(recommendations.count)")
+                    .foregroundStyle(.white)
+            }
+            .font(.system(size: 13, weight: .bold, design: .rounded))
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 
     private var expandedContent: some View {
