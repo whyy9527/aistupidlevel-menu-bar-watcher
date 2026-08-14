@@ -158,7 +158,8 @@ final class NotchIslandController: ObservableObject {
 
         let preferredSize = NotchIslandLayout.size(
             for: models.count,
-            expanded: isExpanded
+            expanded: isExpanded,
+            screen: screen
         )
         let size = CGSize(
             width: min(preferredSize.width, max(240, screen.frame.width - 32)),
@@ -184,11 +185,20 @@ final class NotchIslandController: ObservableObject {
 }
 
 private enum NotchIslandLayout {
-    static func size(for modelCount: Int, expanded: Bool) -> CGSize {
+    static func size(for modelCount: Int, expanded: Bool, screen: NSScreen) -> CGSize {
         guard expanded else {
-            return CGSize(width: 196, height: NSStatusBar.system.thickness)
+            return CGSize(width: 196, height: compactHeight(on: screen))
         }
         return CGSize(width: 520, height: modelCount == 0 ? 96 : 132)
+    }
+
+    private static func compactHeight(on screen: NSScreen) -> CGFloat {
+        // A MacBook's camera housing is taller than the menu bar. On a
+        // notchless or external display, use the common floating-island size.
+        if screen.safeAreaInsets.top > 0 {
+            return screen.safeAreaInsets.top
+        }
+        return max(32, NSStatusBar.system.thickness)
     }
 }
 
