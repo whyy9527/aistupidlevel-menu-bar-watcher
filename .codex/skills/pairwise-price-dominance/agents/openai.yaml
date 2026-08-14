@@ -1,4 +1,0 @@
-interface:
-  display_name: "Pairwise Price Dominance"
-  short_description: "Validate smarter-and-cheaper model recommendation pairs"
-  default_prompt: "Use $pairwise-price-dominance to fix a model recommendation that may confuse global value rank with direct cost dominance."

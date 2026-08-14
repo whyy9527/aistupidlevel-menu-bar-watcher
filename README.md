@@ -2,11 +2,10 @@
 
 A native, dependency-free macOS menu-bar watcher for the public [AI Stupid
 Level leaderboard](https://aistupidlevel.info/?mode=leaderboard&period=latest&sortBy=combined).
-It keeps the combined top 20, value top 20, GPT cluster, Claude cluster, and a
-compact Claude-vs-GPT comparison one click away. A compact simulated notch
-stays centered at the top of the active screen. Choose whether it is enabled
-and whether it follows GPT or Claude from the menu; hover it to expand that
-cluster's current intelligence inversion.
+It keeps the combined top 20, value top 20, GPT cluster, and Claude cluster one
+click away. A compact simulated notch stays centered at the top of the active
+screen. Choose whether it is enabled and whether it follows GPT or Claude from
+the menu; hover it to expand that cluster's top three models.
 
 [![CI](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml/badge.svg)](https://github.com/whyy9527/aistupidlevel-menu-bar-watcher/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -27,22 +26,6 @@ The watcher includes a price/performance view. It uses the upstream project's
 This is a source-monitoring aid, not an automated model selector. A score gap
 is a reason to inspect the task mix, confidence interval, freshness, and real
 cost before changing a production model.
-
-## Cluster recommendation
-
-The GPT and Claude clusters use the same deterministic gate. A `USE` candidate
-must be present in both visible lists: combined `TOP 20` and `TOP VALUE` top
-20. It must first be within `max(3 points, 7%)` of its cluster's `TOP 20`
-leader by the published combined point score; confidence-range overlap does not
-override that gate, so a low-score bargain cannot displace the intelligence
-frontier. It is then compared directly with a same-cluster `TOP 20` peer:
-the candidate must have a strict point-score lead *and* a lower known blended
-price per 1M tokens. `TOP VALUE` is only a secondary tie-breaker among valid
-pairs; it never proves that one specific model is cheaper than another. Valid
-pairs first prefer the higher-scoring candidate, then its higher-scoring
-expensive peer, before price saving and `TOP VALUE` break remaining ties. The
-display includes both scores, both prices, and the calculated saving. This
-makes Terra-over-Sol surface while Terra-over-Luna cannot.
 
 ## Run
 
@@ -116,14 +99,12 @@ reliability.
   pricing, provider discounts, and task-specific input/output mix can change it.
 - `TOP 20`: source `combined` ordering.
 - `TOP VALUE`: current price/performance ordering.
-- `GPT CLUSTER` and `CLAUDE CLUSTER`: provider-family rows plus their optional
-  same-family `USE` pick.
+- `GPT CLUSTER` and `CLAUDE CLUSTER`: provider-family rankings.
 - Simulated notch: enable it from the menu and choose its GPT or Claude focus.
-  The compact state uses the app icon and shows the selected cluster's better
-  model; hover to expand the inversion and click it to open that model page.
+  The compact state shows that cluster's `TOP 3`; hover to see the three model
+  names and their combined scores, then click one to open its model page.
 - `Data refreshed`: the last successful local snapshot refresh time. It is
   retained when a later refresh fails.
-- `CLAUDE VS GPT`: each cluster's score leader and value pick.
 - `C`: source `combined` view, used for the combined top-20 ordering.
 - `R`: source `reasoning` view, a deep-reasoning signal.
 - `T`: source `tooling` view, a tool-calling signal.

@@ -32,30 +32,11 @@ struct MenuContentView: View {
             }
 
             Menu(ModelCluster.gpt.menuTitle) {
-                clusterContent(
-                    rows: snapshot.gptRows,
-                    recommendation: snapshot.gptRecommendation
-                )
+                clusterContent(rows: snapshot.gptRows)
             }
 
             Menu(ModelCluster.claude.menuTitle) {
-                clusterContent(
-                    rows: snapshot.claudeRows,
-                    recommendation: snapshot.claudeRecommendation
-                )
-            }
-
-            Menu("CLAUDE VS GPT") {
-                if let comparison = snapshot.clusterComparison {
-                    Button(comparisonScoreLabel(comparison)) {
-                        open(comparison.gptScoreLeader.modelURL)
-                    }
-                    Button(comparisonValueLabel(comparison)) {
-                        open(comparison.gptValuePick.modelURL)
-                    }
-                } else {
-                    Text("No comparable GPT and Claude rows")
-                }
+                clusterContent(rows: snapshot.claudeRows)
             }
         } else if store.isRefreshing {
             Text("Loading latest leaderboard…")
@@ -116,15 +97,7 @@ struct MenuContentView: View {
     }
 
     @ViewBuilder
-    private func clusterContent(
-        rows: [RankedModel],
-        recommendation: ClusterRecommendation?
-    ) -> some View {
-        if let recommendation {
-            Button(recommendationLabel(recommendation)) {
-                open(recommendation.recommended.modelURL)
-            }
-        }
+    private func clusterContent(rows: [RankedModel]) -> some View {
         if rows.isEmpty {
             Text("No cluster rows")
         } else {
@@ -149,32 +122,9 @@ struct MenuContentView: View {
         return "\(modelName(model)) · V \(rank) · \(value) pts/$ · \(cost)/1M"
     }
 
-    private func recommendationLabel(_ recommendation: ClusterRecommendation) -> String {
-        let savings = recommendation.costSavingsFraction.map { String(format: "%.0f%% less", $0 * 100) } ?? "lower cost"
-        return "⚡︎ \(modelName(recommendation.recommended)) · C \(score(recommendation.recommended.combined)) · \(cost(recommendation.recommended)) > \(modelName(recommendation.expensivePeer)) · C \(score(recommendation.expensivePeer.combined)) · \(cost(recommendation.expensivePeer)) · \(savings)"
-    }
-
-    private func comparisonScoreLabel(_ comparison: ClusterComparison) -> String {
-        "TOP · GPT \(modelName(comparison.gptScoreLeader)) \(score(comparison.gptScoreLeader.combined)) · CLAUDE \(modelName(comparison.claudeScoreLeader)) \(score(comparison.claudeScoreLeader.combined))"
-    }
-
-    private func comparisonValueLabel(_ comparison: ClusterComparison) -> String {
-        "VALUE · GPT \(modelName(comparison.gptValuePick)) \(value(comparison.gptValuePick)) · CLAUDE \(modelName(comparison.claudeValuePick)) \(value(comparison.claudeValuePick))"
-    }
-
     private func score(_ value: Double?) -> String {
         guard let value else { return "—" }
         return String(format: "%.0f", value)
-    }
-
-    private func value(_ model: RankedModel) -> String {
-        guard let value = model.valueScore else { return "—" }
-        return String(format: "V %.1f", value)
-    }
-
-    private func cost(_ model: RankedModel) -> String {
-        guard let cost = model.blendedCostPerMillion else { return "price unknown" }
-        return String(format: "$%.2f/M", cost)
     }
 
     private func modelName(_ model: RankedModel) -> String {

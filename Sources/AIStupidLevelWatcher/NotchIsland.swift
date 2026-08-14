@@ -13,7 +13,7 @@ final class NotchIslandController: ObservableObject {
 
     private var panel: NSPanel?
     private var snapshot: DashboardSnapshot?
-    private var recommendations: [ClusterRecommendation] = []
+    private var models: [RankedModel] = []
     private var isExpanded = false
     private var screenObserver: NSObjectProtocol?
 
@@ -40,7 +40,7 @@ final class NotchIslandController: ObservableObject {
 
     func update(snapshot: DashboardSnapshot?) {
         self.snapshot = snapshot
-        updateRecommendations()
+        updateModels()
         updatePanel(animated: false)
     }
 
@@ -62,19 +62,19 @@ final class NotchIslandController: ObservableObject {
         focusedCluster = cluster
         UserDefaults.standard.set(cluster.rawValue, forKey: PreferenceKey.focusedCluster)
         isExpanded = false
-        updateRecommendations()
+        updateModels()
         updatePanel(animated: false)
     }
 
-    private func updateRecommendations() {
-        let recommendation: ClusterRecommendation?
+    private func updateModels() {
+        let rows: [RankedModel]
         switch focusedCluster {
         case .gpt:
-            recommendation = snapshot?.gptRecommendation
+            rows = snapshot?.gptRows ?? []
         case .claude:
-            recommendation = snapshot?.claudeRecommendation
+            rows = snapshot?.claudeRows ?? []
         }
-        recommendations = recommendation.map { [$0] } ?? []
+        models = Array(rows.prefix(3))
     }
 
     private func setExpanded(_ expanded: Bool) {
@@ -110,7 +110,8 @@ final class NotchIslandController: ObservableObject {
         self.panel = panel
         panel.contentView = NSHostingView(
             rootView: NotchIslandView(
-                recommendations: recommendations,
+                models: models,
+                cluster: focusedCluster,
                 isExpanded: isExpanded,
                 onHover: { [weak self] hovering in
                     self?.requestExpansion(hovering)
@@ -156,7 +157,7 @@ final class NotchIslandController: ObservableObject {
         }
 
         let preferredSize = NotchIslandLayout.size(
-            for: recommendations.count,
+            for: models.count,
             expanded: isExpanded
         )
         let size = CGSize(
@@ -183,19 +184,17 @@ final class NotchIslandController: ObservableObject {
 }
 
 private enum NotchIslandLayout {
-    static func size(for recommendationCount: Int, expanded: Bool) -> CGSize {
+    static func size(for modelCount: Int, expanded: Bool) -> CGSize {
         guard expanded else {
             return CGSize(width: 196, height: 34)
         }
-        if recommendationCount == 0 {
-            return CGSize(width: 520, height: 96)
-        }
-        return CGSize(width: 520, height: recommendationCount > 1 ? 176 : 126)
+        return CGSize(width: 520, height: modelCount == 0 ? 96 : 132)
     }
 }
 
 private struct NotchIslandView: View {
-    let recommendations: [ClusterRecommendation]
+    let models: [RankedModel]
+    let cluster: ModelCluster
     let isExpanded: Bool
     let onHover: (Bool) -> Void
 
@@ -219,10 +218,8 @@ private struct NotchIslandView: View {
         } label: {
             HStack(spacing: 7) {
                 appIcon
-                Text(compactRecommendationNames)
+                Text("\(cluster.notchTitle.uppercased()) TOP 3")
                     .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
             }
             .font(.system(size: 13, weight: .bold, design: .rounded))
             .contentShape(Rectangle())
@@ -239,54 +236,33 @@ private struct NotchIslandView: View {
             .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     }
 
-    private var compactRecommendationNames: String {
-        guard !recommendations.isEmpty else {
-            return "NO BETTER MODEL"
-        }
-        return recommendations
-            .map { $0.recommended.name.uppercased() }
-            .joined(separator: " · ")
-    }
-
     private var expandedContent: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 7) {
             HStack(spacing: 7) {
-                Image(systemName: recommendations.isEmpty ? "bolt.slash.fill" : "bolt.fill")
-                    .foregroundStyle(recommendations.isEmpty ? .white.opacity(0.55) : .yellow)
-                Text("INTELLIGENCE INVERSION")
+                Image(systemName: "chart.bar.fill")
+                    .foregroundStyle(.yellow)
+                Text("\(cluster.notchTitle.uppercased()) TOP 3")
                     .foregroundStyle(.white.opacity(0.68))
             }
             .font(.system(size: 11, weight: .bold, design: .rounded))
 
-            if recommendations.isEmpty {
-                Text("NO CURRENT INVERSION")
+            if models.isEmpty {
+                Text("NO \(cluster.notchTitle.uppercased()) MODELS")
                     .font(.system(size: 15, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
             } else {
-                ForEach(recommendations, id: \.cluster) { recommendation in
+                ForEach(models) { model in
                     Button {
-                        guard let url = recommendation.recommended.modelURL else { return }
+                        guard let url = model.modelURL else { return }
                         NSWorkspace.shared.open(url)
                     } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 10) {
-                                Text(modelName(recommendation.recommended))
-                                Spacer(minLength: 0)
-                                Text(modelMetrics(recommendation.recommended))
-                                    .foregroundStyle(.white.opacity(0.7))
-                            }
-                            HStack(spacing: 10) {
-                                Image(systemName: "arrow.down.right")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(.yellow)
-                                Text(modelName(recommendation.expensivePeer))
-                                Spacer(minLength: 0)
-                                Text(modelMetrics(recommendation.expensivePeer))
-                                    .foregroundStyle(.white.opacity(0.7))
-                            }
-                            Text(inversionMetrics(recommendation))
-                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                        HStack(spacing: 8) {
+                            Text("#\(model.clusterRank ?? 0)")
                                 .foregroundStyle(.yellow)
+                            Text(model.name.uppercased())
+                            Spacer(minLength: 0)
+                            Text(model.combined.map { String(format: "C %.0f", $0) } ?? "C —")
+                                .foregroundStyle(.white.opacity(0.7))
                         }
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
@@ -300,24 +276,6 @@ private struct NotchIslandView: View {
         .padding(.horizontal, 22)
         .padding(.top, 11)
         .padding(.bottom, 15)
-    }
-
-    private func modelName(_ model: RankedModel) -> String {
-        model.name.uppercased()
-    }
-
-    private func modelMetrics(_ model: RankedModel) -> String {
-        let score = model.combined.map { String(format: "C %.0f", $0) } ?? "C —"
-        let cost = model.blendedCostPerMillion.map { String(format: "$%.2f/M", $0) } ?? "price unknown"
-        return "\(score) · \(cost)"
-    }
-
-    private func inversionMetrics(_ recommendation: ClusterRecommendation) -> String {
-        let intelligenceGain = String(format: "+%.0f smarter", recommendation.scoreDifference)
-        let savings = recommendation.costSavingsFraction.map {
-            String(format: "%.0f%% less", $0 * 100)
-        } ?? "lower cost"
-        return "\(intelligenceGain) · \(savings)"
     }
 }
 
